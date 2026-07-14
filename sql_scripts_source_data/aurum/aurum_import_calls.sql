@@ -26,11 +26,11 @@ CALL load_aurum_range_raw('observation_004', 'observation', 'observation', 301, 
 CALL load_aurum_range_raw('observation_005', 'observation', 'observation', 401, 500);
 CALL load_aurum_range_raw('observation_006', 'observation', 'observation', 501, 600);
 CALL load_aurum_range_raw('observation_007', 'observation', 'observation', 601, 700);
-*/
 CALL load_aurum_range_raw('observation_008', 'observation', 'observation', 701, 800); 
 CALL load_aurum_range_raw('observation_009', 'observation', 'observation', 801, 900);
-CALL load_aurum_range_raw('observation_010', 'observation', 'observation', 901, 1000);
-CALL load_aurum_range_raw('observation_011', 'observation', 'observation', 1001, 1100);
+*/
+CALL load_aurum_range_raw('observation_010', 'observation', 'observation', 902, 1000);
+CALL load_aurum_range_raw('observation_011', 'observation', 'observation', 1026, 1100);
 CALL load_aurum_range_raw('observation_012', 'observation', 'observation', 1101, 1200);
 CALL load_aurum_range_raw('observation_013', 'observation', 'observation', 1201, 1300);
 CALL load_aurum_range_raw('observation_014', 'observation', 'observation', 1301, 1400);

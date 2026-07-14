@@ -2,6 +2,7 @@
 USE gold;
 
 --idx_patid
+
 CREATE INDEX idx_patid ON clinical (patid);
 
 CREATE INDEX idx_patid ON test_001 (patid);

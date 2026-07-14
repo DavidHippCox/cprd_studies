@@ -1,14 +1,15 @@
+use gold_oxcprd_001b;
+
 CREATE TABLE IF NOT EXISTS medcode_template (
-  MedCodeId BIGINT UNSIGNED,
-  Observations TEXT,
-  OriginalReadCode TEXT,
-  CleansedReadCode TEXT,
-  Term TEXT,
-  SnomedCTConceptId BIGINT UNSIGNED,
-  SnomedCTDescriptionId BIGINT UNSIGNED,
+  medcode BIGINT UNSIGNED,
+  readcode TEXT,
+  clinicalevents TEXT,
+  immunisationevents TEXT,
+  referralevents TEXT,
+  testevents TEXT,
+  readterm TEXT,
   databaserelease TEXT,
-  EmisCodeCategoryId TINYINT,
-  PRIMARY KEY(MedCodeId)
+  PRIMARY KEY(medcode)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE v1_5_dementia_codes_GOLD LIKE medcode_template;
@@ -32,24 +33,22 @@ ALTER TABLE v1_neuropsychariatric_codes_GOLD
 
 ALTER TABLE v2_2_alcohol_codes_GOLD
   ADD COLUMN alc_category VARCHAR(255),
-  ADD COLUMN strict_phenotype VARCHAR(255),
-  ADD COLUMN history_of VARCHAR(255),
-  ADD COLUMN DHC_comments VARCHAR(255),
-  ADD COLUMN AT_NF_comments VARCHAR(255);
-
+  ADD COLUMN strict_phenotype VARCHAR(255);
 
 CREATE TABLE IF NOT EXISTS prodcode_template (
-  prodcodeid BIGINT,
-  dmdid BIGINT UNSIGNED,
-  termfromemis VARCHAR(255),
+  prodcode BIGINT UNSIGNED,
+  dmdcode BIGINT UNSIGNED,
+  gemscriptcode BIGINT UNSIGNED,
+  therapyevents VARCHAR(255),
   productname VARCHAR(999),
+  drugsubstance VARCHAR(999),
+  strength VARCHAR(999),
   formulation VARCHAR(999),
-  routeofadministration VARCHAR(999),
-  drugsubstancename VARCHAR(999),
-  substancestrength VARCHAR(999),
+  route VARCHAR(999),
+  bnfcode VARCHAR(999),
   bnfchapter VARCHAR(999),
-  drugissues TEXT,
-  PRIMARY KEY (prodcodeid)
+  databaserelease TEXT,
+  PRIMARY KEY (prodcode)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- CREATE TABLE v0_alcohol_drug_GOLD LIKE prodcode_template;
@@ -63,7 +62,7 @@ ALTER TABLE v1_medication_codes_GOLD
 
 
 CREATE TABLE IF NOT EXISTS icd10_template (
-  icd10 BIGINT UNSIGNED,
+  icd10 VARCHAR(9) NOT NULL,
   description TEXT,
   PRIMARY KEY(icd10)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

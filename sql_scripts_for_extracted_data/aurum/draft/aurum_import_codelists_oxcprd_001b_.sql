@@ -60,6 +60,15 @@ ALTER TABLE v0_medication_codes_AURUM
   ADD COLUMN drugtypes VARCHAR(255),
   ADD COLUMN alcohol_detoxification VARCHAR(255);
 
+CREATE TABLE IF NOT EXISTS icd10_template (
+  icd10 VARCHAR(9) NOT NULL,
+  description TEXT,
+  PRIMARY KEY(icd10)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE alcohol_codes_icd10 LIKE icd10_template;
+CREATE TABLE dementia_codes_icd10 LIKE icd10_template;
+
 DELIMITER //
 
 CREATE PROCEDURE load_file(
@@ -105,3 +114,6 @@ CALL load_file('medcodes/v0_tbi_codes_AURUM.txt','v0_tbi_codes_AURUM');
 CALL load_file('prodcodes/v0_alcohol_drug_AURUM.txt','v0_alcohol_drug_AURUM');
 CALL load_file('prodcodes/v0_dementia_drug_AURUM.txt','v0_dementia_drug_AURUM');
 CALL load_file('prodcodes/v0_medication_codes_AURUM.txt','v0_medication_codes_AURUM');
+
+call load_file('icd10/alchol_codes_icd10', 'alcohol_codes_icd10')
+call load_file('icd10/dementia_codes_icd10', 'dementia_codes_icd10')

@@ -179,11 +179,11 @@ SET epistart = STR_TO_DATE(NULLIF(@epistart,''),'%Y/%m/%d'),
 epiend = STR_TO_DATE(NULLIF(@epiend,''),'%Y/%m/%d'),
 ICD = NULLIF(@ICD,'-.'),
 ICDx = NULLIF(@ICDx,'')
---  hesDiagnosisHosp:
+--  hes_diagnosis_hosp:
 
-DROP TABLE IF EXISTS hesDiagnosisHosp
+DROP TABLE IF EXISTS hes_diagnosis_hosp
 
-CREATE TABLE IF NOT EXISTS hesDiagnosisHosp
+CREATE TABLE IF NOT EXISTS hes_diagnosis_hosp
 (patid BIGINT UNSIGNED,
 spno BIGINT UNSIGNED,
 admidate DATE,
@@ -195,7 +195,7 @@ ENGINE=InnoDB
 CHARSET=utf8mb4
 
 LOAD DATA INFILE '{path}' IGNORE
-INTO TABLE hesDiagnosisHosp
+INTO TABLE hes_diagnosis_hosp
 FIELDS TERMINATED BY '\t' ESCAPED BY '\b'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
@@ -422,9 +422,9 @@ DROP TABLE IF EXISTS hesop_patient_pathway
 
 CREATE TABLE IF NOT EXISTS hesop_patient_pathway
 (patid BIGINT UNSIGNED NOT NULL,
-attendkey1 BIGINT UNSIGNED NOT NULL,
+attendkey BIGINT UNSIGNED NOT NULL,
 subdate DATE,
-PRIMARY KEY (patid, attendkey1))
+PRIMARY KEY (patid, attendkey))
 ENGINE=InnoDB
 CHARSET=utf8mb4
 
@@ -433,7 +433,7 @@ INTO TABLE hesop_patient_pathway
 FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
-(patid, attendkey1, @subdate)
+(patid, attendkey, @subdate)
 SET subdate = STR_TO_DATE(NULLIF(@subdate,''),'%Y/%m/%d')
 --  hesop_appointment:
 
@@ -441,7 +441,7 @@ DROP TABLE IF EXISTS hesop_appointment
 
 CREATE TABLE IF NOT EXISTS hesop_appointment
 (patid BIGINT UNSIGNED NOT NULL,
-attendkey3 BIGINT UNSIGNED NOT NULL,
+attendkey BIGINT UNSIGNED NOT NULL,
 ethnos CHAR(9),
 admincat TINYINT,
 apptdate DATE,
@@ -458,7 +458,7 @@ servtype TINYINT,
 stafftyp TINYINT,
 wait_ind TINYINT,
 waiting SMALLINT,
-PRIMARY KEY (patid, attendkey3))
+PRIMARY KEY (patid, attendkey))
 ENGINE=InnoDB
 CHARSET=utf8mb4
 
@@ -467,7 +467,7 @@ INTO TABLE hesop_appointment
 FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
-(patid, attendkey3, @ethnos, admincat, @apptdate, @apptage, atentype, attended, @dnadate, @firstatt, outcome, priority, refsourc, @reqdate, servtype, stafftyp, wait_ind, @waiting)
+(patid, attendkey, @ethnos, admincat, @apptdate, @apptage, atentype, attended, @dnadate, @firstatt, outcome, priority, refsourc, @reqdate, servtype, stafftyp, wait_ind, @waiting)
 SET ethnos = NULLIF(@ethnos,''),
 apptdate = STR_TO_DATE(NULLIF(@apptdate,''),'%Y/%m/%d'),
 apptage = NULLIF(@apptage,''),
@@ -481,14 +481,14 @@ DROP TABLE IF EXISTS hesop_clinical
 
 CREATE TABLE IF NOT EXISTS hesop_clinical
 (patid BIGINT UNSIGNED NOT NULL,
-attendkey3 BIGINT UNSIGNED NOT NULL,
+attendkey BIGINT UNSIGNED NOT NULL,
 diagnosis CHAR(9),
 icdx CHAR(9),
 icd CHAR(9),
 diag_order SMALLINT,
 tretspef CHAR(9),
 mainspef CHAR(9),
-PRIMARY KEY (patid, attendkey3))
+PRIMARY KEY (patid, attendkey))
 ENGINE=InnoDB
 CHARSET=utf8mb4
 
@@ -497,7 +497,7 @@ INTO TABLE hesop_clinical
 FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
-(patid, attendkey3, @diagnosis, @icdx, @icd, @diag_order, @tretspef, @mainspef)
+(patid, attendkey, @diagnosis, @icdx, @icd, @diag_order, @tretspef, @mainspef)
 SET diagnosis = NULLIF(@diagnosis,''),
 icdx = NULLIF(@icdx,''),
 icd = NULLIF(@icd,''),
@@ -510,14 +510,14 @@ DROP TABLE IF EXISTS hesop_operation
 
 CREATE TABLE IF NOT EXISTS hesop_operation
 (patid BIGINT UNSIGNED NOT NULL,
-attendkey3 BIGINT UNSIGNED NOT NULL,
+attendkey BIGINT UNSIGNED NOT NULL,
 operation CHAR(9),
 opcs CHAR(9),
 opertn_order SMALLINT,
 operstat SMALLINT,
 tretspef CHAR(9),
 mainspef CHAR(9),
-PRIMARY KEY (patid, attendkey3))
+PRIMARY KEY (patid, attendkey))
 ENGINE=InnoDB
 CHARSET=utf8mb4
 
@@ -526,7 +526,7 @@ INTO TABLE hesop_operation
 FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
-(patid, attendkey3, @operation, @opcs, @opertn_order, @operstat, @tretspef, @mainspef)
+(patid, attendkey, @operation, @opcs, @opertn_order, @operstat, @tretspef, @mainspef)
 SET operation = NULLIF(REPLACE(REPLACE(REPLACE(TRIM(@operation), '\r', ''), '\n', ''), '\t', ''), ''),
     opcs = NULLIF(REPLACE(REPLACE(REPLACE(TRIM(@opcs), '\r', ''), '\n', ''), '\t', ''), ''),
     opertn_order = NULLIF(REPLACE(REPLACE(REPLACE(TRIM(@opertn_order), '\r', ''), '\n', ''), '\t', ''), ''),
@@ -538,7 +538,7 @@ SET operation = NULLIF(REPLACE(REPLACE(REPLACE(TRIM(@operation), '\r', ''), '\n'
     tretspef = NULLIF(REPLACE(REPLACE(REPLACE(TRIM(@tretspef), '\r', ''), '\n', ''), '\t', ''), ''),
     mainspef = NULLIF(REPLACE(REPLACE(REPLACE(TRIM(@mainspef), '\r', ''), '\n', ''), '\t', ''), '');
 
-patient_imd:
+-- patient_imd:
 
 DROP TABLE IF EXISTS patient_imd
 
