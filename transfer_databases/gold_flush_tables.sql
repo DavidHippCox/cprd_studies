@@ -1,0 +1,22 @@
+USE gold_linked;
+
+FLUSH TABLES gold.additional,
+gold.clinical_001,
+gold.clinical_002,
+gold.clinical_003,
+gold.consultation_001,
+gold.consultation_002,
+gold.consultation_003,
+gold.consultation_004,
+gold.gold_import_progress,
+gold.immunisation,
+gold.patient,
+gold.practice,
+gold.referral,
+gold.staff,
+gold.test_001,
+gold.test_002,
+gold.test_003,
+gold.therapy_001,
+gold.therapy_002,
+gold.therapy_003 FOR export
