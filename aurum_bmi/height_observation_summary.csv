@@ -1,0 +1,137 @@
+medcodeid,medcodeid_term,numunitid,numunitid_description,numunitid_count
+253669010,Standing height,24617,ft in,1
+253669010,Standing height,22120,,821
+253669010,Standing height,13450,m.,1
+253669010,Standing height,12164,centimeter,15
+253669010,Standing height,11710,foot,2
+253669010,Standing height,10546,centimeters,1
+253669010,Standing height,9665,1243,2
+253669010,Standing height,8988,169.5cm,1
+253669010,Standing height,7143,feet,3
+253669010,Standing height,6526,/cm,2
+253669010,Standing height,5620,91,1
+253669010,Standing height,5440,85,1
+253669010,Standing height,5387,648,1
+253669010,Standing height,4663,194,1
+253669010,Standing height,4445,114,1
+253669010,Standing height,4056,26,3
+253669010,Standing height,4044,29,4
+253669010,Standing height,3830,191,1
+253669010,Standing height,3424,ft,26
+253669010,Standing height,3322,47,1
+253669010,Standing height,3202,metre,14
+253669010,Standing height,3066,86,1
+253669010,Standing height,2832,82,1
+253669010,Standing height,2672,23,14
+253669010,Standing height,2598,ins,10
+253669010,Standing height,2548,INCH,1
+253669010,Standing height,2400,kg.,2
+253669010,Standing height,2392,52,1
+253669010,Standing height,2304,27,3
+253669010,Standing height,2229,22,26
+253669010,Standing height,2212,160,1
+253669010,Standing height,2190,76,1
+253669010,Standing height,2168,55,1
+253669010,Standing height,2136,25,3
+253669010,Standing height,2101,32,2
+253669010,Standing height,1886,11,2
+253669010,Standing height,1514,28,2
+253669010,Standing height,1486,M/ml,1
+253669010,Standing height,1291,24,7
+253669010,Standing height,1212,100,1
+253669010,Standing height,1068,21,1
+253669010,Standing height,940,inches,4
+253669010,Standing height,827,Kgs,24
+253669010,Standing height,777,meters,2
+253669010,Standing height,679,g,3
+253669010,Standing height,671,30,1
+253669010,Standing height,432,metres,265
+253669010,Standing height,430,40,1
+253669010,Standing height,408,cms,92379
+253669010,Standing height,292,Unk UoM,12
+253669010,Standing height,229,mu/L,1
+253669010,Standing height,216,mmHg,9
+253669010,Standing height,209,mm,5
+253669010,Standing height,182,MG/DL,1
+253669010,Standing height,177,meter,3
+253669010,Standing height,173,m,1303553
+253669010,Standing height,160,l,1
+253669010,Standing height,157,kg/m2,20
+253669010,Standing height,156,kg,497
+253669010,Standing height,122,cm,109669369
+253669010,Standing height,41,/min,20
+253669010,Standing height,1,%,2
+253672015,O/E -height within 10% average,4231,O/E -height within 10% average,185
+253672015,O/E -height within 10% average,1155,(Unknown),1
+253672015,O/E -height within 10% average,432,metres,3939
+253672015,O/E -height within 10% average,218,mmol/L,2
+253672015,O/E -height within 10% average,212,mm/Hg,23
+253672015,O/E -height within 10% average,173,m,199
+253672015,O/E -height within 10% average,122,cm,8952
+253673013,O/E-height 10-20% over average,4251,O/E-height 10-20% over average,10
+253673013,O/E-height 10-20% over average,432,metres,386
+253673013,O/E-height 10-20% over average,173,m,11
+253673013,O/E-height 10-20% over average,122,cm,338
+253675018,O/E - loss of height,3641,O/E - loss of height,16
+253675018,O/E - loss of height,432,metres,7
+253675018,O/E - loss of height,173,m,2
+253675018,O/E - loss of height,122,cm,437
+253676017,O/E - height NOS,3313,met,1
+253676017,O/E - height NOS,3202,metre,1
+253676017,O/E - height NOS,2028,/,1
+253676017,O/E - height NOS,1659,CLASS,2
+253676017,O/E - height NOS,940,inches,1
+253676017,O/E - height NOS,432,metres,16514
+253676017,O/E - height NOS,425,mEq/L,2
+253676017,O/E - height NOS,408,cms,10
+253676017,O/E - height NOS,212,mm/Hg,1
+253676017,O/E - height NOS,182,MG/DL,4
+253676017,O/E - height NOS,173,m,1065
+253676017,O/E - height NOS,157,kg/m2,1
+253676017,O/E - height NOS,156,kg,11
+253676017,O/E - height NOS,122,cm,49387
+271181000006113,O/E-height > 20% below average,3443,O/E-height > 20% below average,74
+271181000006113,O/E-height > 20% below average,432,metres,393
+271181000006113,O/E-height > 20% below average,173,m,6
+271181000006113,O/E-height > 20% below average,122,cm,246
+272151000006114,O/E -height > 20% over average,7812,O/E -height > 20% over average,59
+272151000006114,O/E -height > 20% over average,432,metres,116
+272151000006114,O/E -height > 20% over average,173,m,4
+272151000006114,O/E -height > 20% over average,122,cm,109
+284561000006119,O/E - height 10-20% < average,7805,O/E - height 10-20% < average,32
+284561000006119,O/E - height 10-20% < average,432,metres,444
+284561000006119,O/E - height 10-20% < average,173,m,8
+284561000006119,O/E - height 10-20% < average,122,cm,446
+3315711000006110,Body height measure,3424,ft,803
+3315711000006110,Body height measure,1691,Stones,16
+3315711000006110,Body height measure,292,Unk UoM,1
+3315711000006110,Body height measure,173,m,41
+3315711000006110,Body height measure,122,cm,1950
+3315721000006119,Body height,3424,ft,1
+3315721000006119,Body height,940,inches,1
+3315721000006119,Body height,827,Kgs,12
+3315721000006119,Body height,432,metres,18
+3315721000006119,Body height,216,mmHg,4
+3315721000006119,Body height,175,m2,2
+3315721000006119,Body height,173,m,312
+3315721000006119,Body height,157,kg/m2,1
+3315721000006119,Body height,156,kg,49
+3315721000006119,Body height,122,cm,7168
+4551671000006115,On examination - height,827,Kgs,1
+4551671000006115,On examination - height,209,mm,1
+4551671000006115,On examination - height,156,kg,1
+4551671000006115,On examination - height,122,cm,71
+11905141000006112,O/E - height,29926,metre(s),1
+11905141000006112,O/E - height,21264,feet and inches,1
+11905141000006112,O/E - height,3424,ft,637
+11905141000006112,O/E - height,1031,mM/M,1
+11905141000006112,O/E - height,940,inches,1
+11905141000006112,O/E - height,907,kg/m^2,2
+11905141000006112,O/E - height,827,Kgs,2
+11905141000006112,O/E - height,432,metres,60
+11905141000006112,O/E - height,209,mm,2
+11905141000006112,O/E - height,173,m,28412
+11905141000006112,O/E - height,157,kg/m2,11
+11905141000006112,O/E - height,156,kg,196
+11905141000006112,O/E - height,122,cm,137702
+11905141000006112,O/E - height,41,/min,4
