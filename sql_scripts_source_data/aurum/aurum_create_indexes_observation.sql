@@ -8,6 +8,7 @@ CREATE INDEX idx_patid ON observation_004 (patid);
 CREATE INDEX idx_patid ON observation_005 (patid);
 CREATE INDEX idx_patid ON observation_006 (patid);
 CREATE INDEX idx_patid ON observation_007 (patid);
+CREATE INDEX idx_patid ON observation_008 (patid);
 CREATE INDEX idx_patid ON observation_009 (patid);
 CREATE INDEX idx_patid ON observation_010 (patid);
 
@@ -44,30 +45,6 @@ CREATE INDEX idx_medcodeid_obsdate ON observation_017 (medcodeid, obsdate);
 CREATE INDEX idx_medcodeid_obsdate ON observation_018 (medcodeid, obsdate);
 CREATE INDEX idx_medcodeid_obsdate ON observation_019 (medcodeid, obsdate);
 CREATE INDEX idx_medcodeid_obsdate ON observation_020 (medcodeid, obsdate);
-
-
-
-ALTER TABLE observation_001 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_002 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_003 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_004 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_005 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_006 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_007 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_008 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_009 ADD PRIMARY KEY (obsid);
-ALTER TABLE observation_010 ADD PRIMARY KEY (obsid);
-
-ALTER TABLE observation_011 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_012 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_013 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_014 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_015 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_016 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_017 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_018 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_019 ADD PRIMARY KEY (obsid); 
-ALTER TABLE observation_020 ADD PRIMARY KEY (obsid);
 
 
 

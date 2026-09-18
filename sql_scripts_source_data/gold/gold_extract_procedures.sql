@@ -159,32 +159,6 @@ BEGIN
             SET MESSAGE_TEXT = 'p_extract_kind must be PATID, CODE, or ADID';
     END IF;
 
-    IF p_source_family IS NULL
-       OR p_source_family NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT =
-                'p_source_family must be a simple family name';
-    END IF;
-
-    IF p_output_database IS NULL
-       OR p_output_database NOT REGEXP '^gold_oxcprd_[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT =
-                'p_output_database must match gold_oxcprd_<project_code>';
-    END IF;
-
-    IF p_id_table IS NULL
-       OR p_id_table NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'p_id_table must be a simple table name';
-    END IF;
-
-    IF p_output_table IS NULL
-       OR p_output_table NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT =
-                'p_output_table must be a simple table name';
-    END IF;
 
     IF p_output_table = p_id_table THEN
         SIGNAL SQLSTATE '45000'
@@ -487,20 +461,20 @@ BEGIN
             'SELECT ',
             v_select_cols,
             ' FROM `',
+            REPLACE(p_output_database, '`', '``'),
+            '`.`',
+            REPLACE(p_id_table, '`', '``'),
+            '` i ',
+            'STRAIGHT_JOIN `',
             REPLACE(DATABASE(), '`', '``'),
             '`.`',
             REPLACE(v_source_table, '`', '``'),
             '` t ',
-            'WHERE EXISTS (',
-            'SELECT 1 FROM `',
-            REPLACE(p_output_database, '`', '``'),
-            '`.`',
-            REPLACE(p_id_table, '`', '``'),
-            '` i WHERE i.`',
+            'ON i.`',
             REPLACE(v_id_col, '`', '``'),
             '` = t.`',
             REPLACE(v_id_col, '`', '``'),
-            '`)'
+            '`'
         );
 
         IF p_extract_kind = 'CODE' THEN
@@ -619,11 +593,8 @@ DELIMITER ;
    6. Examples
    -------------------------------------------------------------------------
 
--- The project database must already exist:
--- CREATE DATABASE gold_oxcprd_001b;
-
 -- ID-list tables are stored in that project database:
--- CREATE TABLE gold_oxcprd_001b.cohort_patids (
+-- CREATE TABLE gold_oxcprd_001b.patids (
 --     patid BIGINT UNSIGNED NOT NULL,
 --     PRIMARY KEY (patid)
 -- ) ENGINE=InnoDB;
@@ -632,9 +603,9 @@ DELIMITER ;
 -- CALL extract_by_patid_to_table(
 --     'clinical',
 --     'gold_oxcprd_001b',
---     'cohort_patids',
+--     'patids',
 --     '*',
---     'cohort_clinical',
+--     'clinical',
 --     TRUE
 -- );
 
@@ -654,9 +625,9 @@ DELIMITER ;
 -- CALL extract_by_adid_to_table(
 --     'additional',
 --     'gold_oxcprd_001b',
---     'cohort_clinical',
+--     'clinical',
 --     '*',
---     'cohort_additional',
+--     'additional',
 --     TRUE
 -- );
 */

@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS tpl_clinical_raw (
   sctexpression TEXT,
   sctmaptype INT UNSIGNED,
   sctmapversion BIGINT UNSIGNED,
-  sctisindicative TINYINT,
-  sctisassured TINYINT,
+  sctisindicative VARCHAR(10),
+  sctisassured VARCHAR(10),
   staffid BIGINT UNSIGNED,
   episode TINYINT UNSIGNED,
   enttype SMALLINT UNSIGNED,
@@ -137,8 +137,8 @@ CREATE TABLE IF NOT EXISTS tpl_referral_raw (
   sctexpression TEXT,
   sctmaptype INT UNSIGNED,
   sctmapversion BIGINT UNSIGNED,
-  sctisindicative TINYINT,
-  sctisassured TINYINT,
+  sctisindicative VARCHAR(10),
+  sctisassured VARCHAR(10),
   staffid BIGINT UNSIGNED,
   source TINYINT UNSIGNED,
   nhsspec TINYINT UNSIGNED,
@@ -161,8 +161,8 @@ CREATE TABLE IF NOT EXISTS tpl_immunisation_raw (
   sctexpression TEXT,
   sctmaptype INT UNSIGNED,
   sctmapversion BIGINT UNSIGNED,
-  sctisindicative TINYINT,
-  sctisassured TINYINT,
+  sctisindicative VARCHAR(10),
+  sctisassured VARCHAR(10),
   staffid BIGINT UNSIGNED,
   immstype SMALLINT UNSIGNED,
   stage TINYINT UNSIGNED,
@@ -187,8 +187,8 @@ CREATE TABLE IF NOT EXISTS tpl_test_raw (
   sctexpression TEXT,
   sctmaptype INT UNSIGNED,
   sctmapversion BIGINT UNSIGNED,
-  sctisindicative TINYINT,
-  sctisassured TINYINT,
+  sctisindicative VARCHAR(10),
+  sctisassured VARCHAR(10),
   staffid BIGINT UNSIGNED,
   enttype SMALLINT UNSIGNED,
   data1 TEXT,
@@ -212,9 +212,9 @@ CREATE TABLE IF NOT EXISTS tpl_therapy_raw (
   staffid BIGINT UNSIGNED,
   dosageid TEXT,
   bnfcode SMALLINT UNSIGNED,
-  qty BIGINT UNSIGNED,
-  numdays INT UNSIGNED,
-  numpacks INT UNSIGNED,
+  qty decimal(9,3),
+  numdays decimal(9,3),
+  numpacks decimal(9,3),
   packtype INT UNSIGNED,
   issueseq BIGINT UNSIGNED,
   prn TINYINT
@@ -236,7 +236,10 @@ CREATE TABLE IF NOT EXISTS consultation_002 LIKE tpl_consultation_raw;
 CREATE TABLE IF NOT EXISTS consultation_003 LIKE tpl_consultation_raw;
 CREATE TABLE IF NOT EXISTS consultation_004 LIKE tpl_consultation_raw;
 
-CREATE TABLE IF NOT EXISTS clinical LIKE tpl_clinical_raw;
+CREATE TABLE IF NOT EXISTS clinical_001 LIKE tpl_clinical_raw;
+CREATE TABLE IF NOT EXISTS clinical_002 LIKE tpl_clinical_raw;
+CREATE TABLE IF NOT EXISTS clinical_003 LIKE tpl_clinical_raw;
+
 
 CREATE TABLE IF NOT EXISTS additional LIKE tpl_additional_raw;
 
@@ -354,10 +357,10 @@ proc: BEGIN
 
   ELSEIF v_file_type_norm = 'patient' THEN
     SET v_columns = '(@patid, @vmid, @gender, @yob, @mob, @marital, @famnum, @chsreg, @chsdate, @prescr, @capsup, @frd, @crd, @regstat, @reggap, @internal, @tod, @toreason, @deathdate, @accept)';
-    SET v_set_clause = 'patid = NULLIF(@patid, ''''), pracid = CASE WHEN @patid IS NULL OR CHAR_LENGTH(CAST(@patid AS CHAR)) < 5 THEN NULL ELSE SUBSTR(CAST(@patid AS CHAR), CHAR_LENGTH(CAST(@patid AS CHAR)) - 4, 5) END, vmid = NULLIF(@vmid, ''''), gender = NULLIF(@gender, ''''), yob = NULLIF(@yob, ''''), mob = NULLIF(@mob, ''''), marital = NULLIF(@marital, ''''), famnum = NULLIF(@famnum, ''''), chsreg = NULLIF(@chsreg, ''''), chsdate = NULLIF(@chsdate, ''''), prescr = NULLIF(@prescr, ''''), capsup = NULLIF(@capsup, ''''), frd = NULLIF(@frd, ''''), crd = NULLIF(@crd, ''''), regstat = NULLIF(@regstat, ''''), reggap = NULLIF(@reggap, ''''), internal = NULLIF(@internal, ''''), tod = NULLIF(@tod, ''''), toreason = NULLIF(@toreason, ''''), deathdate = NULLIF(@deathdate, ''''), accept = NULLIF(@accept, '''')';
+    SET v_set_clause = 'patid = NULLIF(@patid, ''''), pracid = CASE WHEN @patid IS NULL OR CHAR_LENGTH(CAST(@patid AS CHAR)) < 5 THEN NULL ELSE SUBSTR(CAST(@patid AS CHAR), CHAR_LENGTH(CAST(@patid AS CHAR)) - 4, 5) END, vmid = NULLIF(@vmid, ''''), gender = NULLIF(@gender, ''''), yob = CASE WHEN NULLIF(@yob, '''') IS NULL THEN NULL ELSE CAST(@yob AS UNSIGNED) + 1800 END, mob = NULLIF(@mob, ''''), marital = NULLIF(@marital, ''''), famnum = NULLIF(@famnum, ''''), chsreg = NULLIF(@chsreg, ''''), chsdate = NULLIF(@chsdate, ''''), prescr = NULLIF(@prescr, ''''), capsup = NULLIF(@capsup, ''''), frd = NULLIF(@frd, ''''), crd = NULLIF(@crd, ''''), regstat = NULLIF(@regstat, ''''), reggap = NULLIF(@reggap, ''''), internal = NULLIF(@internal, ''''), tod = NULLIF(@tod, ''''), toreason = NULLIF(@toreason, ''''), deathdate = NULLIF(@deathdate, ''''), accept = NULLIF(@accept, '''')';
 
   ELSEIF v_file_type_norm = 'consultation' THEN
-    SET v_columns = '(@patid, @eventdate, @sysdate, @constype, @consid, @staffid, @duration)';
+    SET v_columns = '(@consid, @patid, @eventdate, @sysdate, @constype, @staffid, @duration)';
     SET v_set_clause = 'patid = NULLIF(@patid, ''''), pracid = CASE WHEN @patid IS NULL OR CHAR_LENGTH(CAST(@patid AS CHAR)) < 5 THEN NULL ELSE SUBSTR(CAST(@patid AS CHAR), CHAR_LENGTH(CAST(@patid AS CHAR)) - 4, 5) END, eventdate = NULLIF(@eventdate, ''''), sysdate = NULLIF(@sysdate, ''''), constype = NULLIF(@constype, ''''), consid = NULLIF(@consid, ''''), staffid = NULLIF(@staffid, ''''), duration = NULLIF(@duration, '''')';
 
   ELSEIF v_file_type_norm = 'clinical' THEN

@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS tpl_drugissue_raw (
 
 CREATE TABLE IF NOT EXISTS tpl_observation_raw (
   patid BIGINT UNSIGNED, consid BIGINT UNSIGNED, pracid MEDIUMINT, obsid BIGINT UNSIGNED NOT NULL, obsdate DATE, enterdate DATE,
-  staffid BIGINT, parentsobsid BIGINT UNSIGNED, medcodeid BIGINT, testvalue DECIMAL(19,3), numunitid BIGINT, obstypeid MEDIUMINT,
+  staffid BIGINT, parentsobsid BIGINT UNSIGNED, medcodeid BIGINT, value DECIMAL(19,3), numunitid BIGINT, obstypeid MEDIUMINT,
   numrangelow DECIMAL(19,3), numrangehigh DECIMAL(19,3), probobsid BIGINT UNSIGNED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -230,8 +230,8 @@ proc: BEGIN
     SET v_columns = '(@patid, @issueid, @pracid, @probobsid, @drugrecid, @issuedate, @enterdate, @staffid, @prodcodeid, @dosageid, @quantity, @quantunitid, @duration, @estnhscost)';
     SET v_set_clause = 'patid = NULLIF(@patid, ''''), issueid = NULLIF(@issueid, ''''), pracid = NULLIF(@pracid, ''''), probobsid = NULLIF(@probobsid, ''''), drugrecid = NULLIF(@drugrecid, ''''), issuedate = NULLIF(@issuedate, ''''), enterdate = NULLIF(@enterdate, ''''), staffid = NULLIF(@staffid, ''''), prodcodeid = NULLIF(@prodcodeid, ''''), dosageid = NULLIF(@dosageid, ''''), quantity = NULLIF(@quantity, ''''), quantunitid = NULLIF(@quantunitid, ''''), duration = NULLIF(@duration, ''''), estnhscost = NULLIF(@estnhscost, '''')';
   ELSEIF v_file_type_norm = 'observation' THEN
-    SET v_columns = '(@patid, @consid, @pracid, @obsid, @obsdate, @enterdate, @staffid, @parentsobsid, @medcodeid, @testvalue, @numunitid, @obstypeid, @numrangelow, @numrangehigh, @probobsid)';
-    SET v_set_clause = 'patid = NULLIF(@patid, ''''), consid = NULLIF(@consid, ''''), pracid = NULLIF(@pracid, ''''), obsid = NULLIF(@obsid, ''''), obsdate = NULLIF(@obsdate, ''''), enterdate = NULLIF(@enterdate, ''''), staffid = NULLIF(@staffid, ''''), parentsobsid = NULLIF(@parentsobsid, ''''), medcodeid = NULLIF(@medcodeid, ''''), testvalue = NULLIF(@testvalue, ''''), numunitid = NULLIF(@numunitid, ''''), obstypeid = NULLIF(@obstypeid, ''''), numrangelow = NULLIF(@numrangelow, ''''), numrangehigh = NULLIF(@numrangehigh, ''''), probobsid = NULLIF(@probobsid, '''')';
+    SET v_columns = '(@patid, @consid, @pracid, @obsid, @obsdate, @enterdate, @staffid, @parentsobsid, @medcodeid, @value, @numunitid, @obstypeid, @numrangelow, @numrangehigh, @probobsid)';
+    SET v_set_clause = 'patid = NULLIF(@patid, ''''), consid = NULLIF(@consid, ''''), pracid = NULLIF(@pracid, ''''), obsid = NULLIF(@obsid, ''''), obsdate = NULLIF(@obsdate, ''''), enterdate = NULLIF(@enterdate, ''''), staffid = NULLIF(@staffid, ''''), parentsobsid = NULLIF(@parentsobsid, ''''), medcodeid = NULLIF(@medcodeid, ''''), value = NULLIF(@value, ''''), numunitid = NULLIF(@numunitid, ''''), obstypeid = NULLIF(@obstypeid, ''''), numrangelow = NULLIF(@numrangelow, ''''), numrangehigh = NULLIF(@numrangehigh, ''''), probobsid = NULLIF(@probobsid, '''')';
   ELSEIF v_file_type_norm = 'patient' THEN
     SET v_columns = '(@patid, @pracid, @usualgpstaffid, @gender, @yob, @mob, @emis_ddate, @regstartdate, @patienttypeid, @regenddate, @acceptable, @cprd_ddate)';
     SET v_set_clause = 'patid = NULLIF(@patid, ''''), pracid = NULLIF(@pracid, ''''), usualgpstaffid = NULLIF(@usualgpstaffid, ''''), gender = NULLIF(@gender, ''''), yob = NULLIF(@yob, ''''), mob = NULLIF(@mob, ''''), emis_ddate = NULLIF(@emis_ddate, ''''), regstartdate = NULLIF(@regstartdate, ''''), patienttypeid = NULLIF(@patienttypeid, ''''), regenddate = NULLIF(@regenddate, ''''), acceptable = NULLIF(@acceptable, ''''), cprd_ddate = NULLIF(@cprd_ddate, '''')';

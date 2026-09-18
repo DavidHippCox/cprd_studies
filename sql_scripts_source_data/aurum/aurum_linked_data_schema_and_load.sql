@@ -179,11 +179,11 @@ SET epistart = STR_TO_DATE(NULLIF(@epistart,''),'%Y/%m/%d'),
 epiend = STR_TO_DATE(NULLIF(@epiend,''),'%Y/%m/%d'),
 ICD = NULLIF(@ICD,'-.'),
 ICDx = NULLIF(@ICDx,'')
---  hesDiagnosisHosp:
+--  hes_diagnosis_hosp:
 
-DROP TABLE IF EXISTS hesDiagnosisHosp
+DROP TABLE IF EXISTS hes_diagnosis_hosp
 
-CREATE TABLE IF NOT EXISTS hesDiagnosisHosp
+CREATE TABLE IF NOT EXISTS hes_diagnosis_hosp
 (patid BIGINT UNSIGNED,
 spno BIGINT UNSIGNED,
 admidate DATE,
@@ -195,7 +195,7 @@ ENGINE=InnoDB
 CHARSET=utf8mb4
 
 LOAD DATA INFILE '{path}' IGNORE
-INTO TABLE hesDiagnosisHosp
+INTO TABLE hes_diagnosis_hosp
 FIELDS TERMINATED BY '\t' ESCAPED BY '\b'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
@@ -557,11 +557,11 @@ LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
 (patid, pracid, @imd_decile)
 SET imd_decile = NULLIF(@imd_decile,'')
---  practiceImd:
+--  practice_imd:
 
-DROP TABLE IF EXISTS practiceImd
+DROP TABLE IF EXISTS practice_imd
 
-CREATE TABLE IF NOT EXISTS practiceImd
+CREATE TABLE IF NOT EXISTS practice_imd
 (pracid MEDIUMINT NOT NULL,
 country VARCHAR(9),
 e2015_imd_10 TINYINT,
@@ -572,7 +572,7 @@ PRIMARY KEY (pracid))
 CHARSET=utf8mb4
 
 LOAD DATA INFILE '{path}' IGNORE
-INTO TABLE practiceImd
+INTO TABLE practice_imd
 FIELDS TERMINATED BY '\t'
 LINES TERMINATED BY '\r\n'
 IGNORE 1 LINES
