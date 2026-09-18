@@ -63,8 +63,28 @@ ON DUPLICATE KEY UPDATE
     date_column = VALUES(date_column);
 
 
+
 /* -------------------------------------------------------------------------
-   2. Extract log
+   2. Excluded pracids
+   ------------------------------------------------------------------------- */
+
+CREATE TABLE IF NOT EXISTS excluded_pracids (
+    pracid MEDIUMINT NOT NULL,
+    PRIMARY KEY (pracid)
+) ENGINE=InnoDB;
+
+INSERT IGNORE INTO excluded_pracids (pracid)
+VALUES
+    (20024), (20469), (20803), (20036), (21112), (21444), (20487), (20804),
+    (20091), (21118), (21451), (20552), (20822), (20171), (21172), (21529),
+    (20554), (20868), (20178), (21173), (21553), (20640), (20908), (20202),
+    (21277), (21558), (20717), (20912), (20254), (21281), (21585), (20734),
+    (20996), (20389), (21331), (20737), (21001), (20430), (21334), (20740),
+    (21015), (20452), (21390), (20790), (21078), (21430);
+
+
+/* -------------------------------------------------------------------------
+   3. Extract log
    ------------------------------------------------------------------------- */
 
 CREATE TABLE IF NOT EXISTS extract_log (
@@ -79,6 +99,8 @@ CREATE TABLE IF NOT EXISTS extract_log (
     date_from DATE NULL,
     date_to DATE NULL,
     requested_columns TEXT NULL,
+    overwrite_output BOOLEAN NOT NULL DEFAULT FALSE,
+    exclude_pracids BOOLEAN NOT NULL DEFAULT FALSE,
     rows_created BIGINT UNSIGNED NULL,
     error_message TEXT NULL,
 
@@ -88,7 +110,6 @@ CREATE TABLE IF NOT EXISTS extract_log (
     INDEX idx_extract_log_source_family (source_family),
     INDEX idx_extract_log_output_table (output_table)
 ) ENGINE=InnoDB;
-
 
 /* -------------------------------------------------------------------------
    3. Core extractor
@@ -105,7 +126,8 @@ CREATE OR REPLACE PROCEDURE extract_to_table_core (
     IN p_date_to DATE,
     IN p_columns TEXT,
     IN p_output_table VARCHAR(128),
-    IN p_overwrite_output BOOLEAN
+    IN p_overwrite_output BOOLEAN,
+    IN p_exclude_pracids BOOLEAN
 )
 BEGIN
     DECLARE v_extract_id BIGINT UNSIGNED DEFAULT NULL;
@@ -130,6 +152,7 @@ BEGIN
     DECLARE v_error_message TEXT;
     DECLARE v_output_object_type VARCHAR(64) DEFAULT NULL;
     DECLARE v_old_group_concat_max_len BIGINT UNSIGNED DEFAULT NULL;
+    DECLARE v_has_duplicate_ids BOOLEAN DEFAULT FALSE;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -159,34 +182,6 @@ BEGIN
     IF p_extract_kind NOT IN ('PATID', 'CODE') THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'p_extract_kind must be PATID or CODE';
-    END IF;
-
-    IF p_source_family IS NULL
-       OR p_source_family NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT =
-                'p_source_family must be a simple family name';
-    END IF;
-
-    IF p_output_database IS NULL
-       OR p_output_database
-          NOT REGEXP '^aurum_oxcprd_[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT =
-                'p_output_database must match aurum_oxcprd_<project_code>';
-    END IF;
-
-    IF p_id_table IS NULL
-       OR p_id_table NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'p_id_table must be a simple table name';
-    END IF;
-
-    IF p_output_table IS NULL
-       OR p_output_table NOT REGEXP '^[A-Za-z0-9_]+$' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT =
-                'p_output_table must be a simple table name';
     END IF;
 
     IF p_output_table = p_id_table THEN
@@ -282,6 +277,34 @@ BEGIN
                 'Input ID table does not contain the configured ID column';
     END IF;
 
+    /* Stop before changing output when the input list contains duplicates. */
+    SET @has_duplicate_ids = FALSE;
+    SET @duplicate_check_sql = CONCAT(
+        'SELECT EXISTS (',
+        'SELECT 1 FROM `',
+        REPLACE(p_output_database, '`', '``'),
+        '`.`',
+        REPLACE(p_id_table, '`', '``'),
+        '` WHERE `',
+        REPLACE(v_id_column, '`', '``'),
+        '` IS NOT NULL GROUP BY `',
+        REPLACE(v_id_column, '`', '``'),
+        '` HAVING COUNT(*) > 1 LIMIT 1',
+        ') INTO @has_duplicate_ids'
+    );
+
+    PREPARE stmt_duplicate_check FROM @duplicate_check_sql;
+    EXECUTE stmt_duplicate_check;
+    DEALLOCATE PREPARE stmt_duplicate_check;
+
+    SET v_has_duplicate_ids = COALESCE(@has_duplicate_ids, FALSE);
+
+    IF v_has_duplicate_ids THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT =
+                'Input patid or codelist contains duplicate IDs; extraction stopped';
+    END IF;
+
     SET v_first_source_table = CASE
         WHEN v_first_suffix = 0 AND v_last_suffix = 0
             THEN p_source_family
@@ -302,6 +325,32 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT =
                 'First configured source table does not exist';
+    END IF;
+
+    IF COALESCE(p_exclude_pracids, FALSE) = TRUE THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+              AND table_name = 'excluded_pracids'
+              AND table_type = 'BASE TABLE'
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT =
+                    'p_exclude_pracids=TRUE requires an excluded_pracids table';
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = DATABASE()
+              AND table_name = v_first_source_table
+              AND column_name = 'pracid'
+        ) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT =
+                    'p_exclude_pracids=TRUE requires a pracid column on the source tables';
+        END IF;
     END IF;
 
     /* Validate and quote the requested source columns. */
@@ -439,7 +488,9 @@ BEGIN
         output_table,
         date_from,
         date_to,
-        requested_columns
+        requested_columns,
+        overwrite_output,
+        exclude_pracids
     ) VALUES (
         NOW(6),
         'STARTED',
@@ -449,7 +500,9 @@ BEGIN
         CONCAT(p_output_database, '.', p_output_table),
         p_date_from,
         p_date_to,
-        v_columns
+        v_columns,
+        COALESCE(p_overwrite_output, FALSE),
+        COALESCE(p_exclude_pracids, FALSE)
     );
 
     SET v_extract_id = LAST_INSERT_ID();
@@ -514,20 +567,20 @@ BEGIN
             'SELECT ',
             v_select_columns,
             ' FROM `',
+            REPLACE(p_output_database, '`', '``'),
+            '`.`',
+            REPLACE(p_id_table, '`', '``'),
+            '` i ',
+            'JOIN `',
             REPLACE(DATABASE(), '`', '``'),
             '`.`',
             REPLACE(v_source_table, '`', '``'),
             '` t ',
-            'WHERE EXISTS (',
-            'SELECT 1 FROM `',
-            REPLACE(p_output_database, '`', '``'),
-            '`.`',
-            REPLACE(p_id_table, '`', '``'),
-            '` i WHERE i.`',
+            'ON i.`',
             REPLACE(v_id_column, '`', '``'),
             '` = t.`',
             REPLACE(v_id_column, '`', '``'),
-            '`)'
+            '`'
         );
 
         IF p_extract_kind = 'CODE' THEN
@@ -536,6 +589,17 @@ BEGIN
                 ' AND t.`',
                 REPLACE(v_date_column, '`', '``'),
                 '` BETWEEN ? AND ?'
+            );
+        END IF;
+
+        IF COALESCE(p_exclude_pracids, FALSE) = TRUE THEN
+            SET v_sql = CONCAT(
+                v_sql,
+                ' WHERE NOT EXISTS (',
+                'SELECT 1 FROM `',
+                REPLACE(DATABASE(), '`', '``'),
+                '`.`excluded_pracids` ep ',
+                'WHERE ep.pracid = t.pracid)'
             );
         END IF;
 
@@ -583,7 +647,8 @@ CREATE OR REPLACE PROCEDURE extract_by_patid_to_table (
     IN p_patid_table VARCHAR(128),
     IN p_columns TEXT,
     IN p_output_table VARCHAR(128),
-    IN p_overwrite_output BOOLEAN
+    IN p_overwrite_output BOOLEAN,
+    IN p_exclude_pracids BOOLEAN
 )
 BEGIN
     CALL extract_to_table_core(
@@ -595,7 +660,8 @@ BEGIN
         NULL,
         p_columns,
         p_output_table,
-        p_overwrite_output
+        p_overwrite_output,
+        p_exclude_pracids
     );
 END//
 
@@ -608,7 +674,8 @@ CREATE OR REPLACE PROCEDURE extract_by_code_to_table (
     IN p_date_to DATE,
     IN p_columns TEXT,
     IN p_output_table VARCHAR(128),
-    IN p_overwrite_output BOOLEAN
+    IN p_overwrite_output BOOLEAN,
+    IN p_exclude_pracids BOOLEAN
 )
 BEGIN
     CALL extract_to_table_core(
@@ -620,7 +687,8 @@ BEGIN
         p_date_to,
         p_columns,
         p_output_table,
-        p_overwrite_output
+        p_overwrite_output,
+        p_exclude_pracids
     );
 END//
 
@@ -636,7 +704,8 @@ CALL extract_by_patid_to_table(
     'aurum_oxcprd_001b',
     'candidate_patids',
     '*',
-    'cohort_observation',
+    'observation',
+    TRUE,
     TRUE
 );
 
@@ -645,7 +714,8 @@ CALL extract_by_patid_to_table(
    'aurum_oxcprd_001b',
    'candidate_patids',
    '*',
-   'cohort_consultation',
+   'consultation',
+   TRUE,
    TRUE
 );
 
@@ -653,10 +723,11 @@ CALL extract_by_code_to_table(
   'drugissue',
   'aurum_oxcprd_001b',
   'v0_dementia_drug_aurum',
-  '2020-01-01',
+  '1998-01-02',
   '2024-12-31',
   'patid,issuedate,prodcodeid',
-  'selected_drugissue',
+  'dementia_drug_drugissue',
+  TRUE,
   TRUE
 );
 
@@ -664,10 +735,25 @@ CALL extract_by_code_to_table(
     'observation',
     'aurum_oxcprd_001b',
     'v0_alcohol_codes_aurum',
-    '2020-01-01',
+    '1900-01-02',
     '2024-12-31',
-    'patid,obsdate,medcodeid',
-    'selected_observation',
+    'patid,obsdate,medcodeid,value,numunitid,obstypeid',
+    'alcohol_observation',
+    TRUE,
     TRUE
 );
+
+CALL extract_by_code_to_table(
+    'observation',
+    'aurum_oxcprd_001b',
+    'v0_dementia_codes_aurum',
+    '1998-01-02',
+    '2024-12-31',
+    'patid,obsdate,medcodeid',
+    'dementia_observation',
+    TRUE,
+    TRUE
+);
+
+
 */
