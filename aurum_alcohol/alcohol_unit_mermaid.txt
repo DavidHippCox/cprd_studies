@@ -1,0 +1,38 @@
+flowchart TD
+    A[Alcohol observation] --> B{Medcode in alcohol_unit lookup?}
+
+    B -->|No| X[Excluded from candidate set]
+    B -->|Yes| C{Acceptable numunitid present?}
+
+    C -->|No| R1[REJECT<br/>NUMUNIT_NULL or NUMUNIT_NOT_ACCEPTED]
+    C -->|Yes| D{Unit and period established<br/>without conflict?}
+
+    D -->|No| R2[REJECT<br/>UNIT or PERIOD reason]
+    D -->|Yes| E{amount_type}
+
+    E -->|VALUE| F{Value present?}
+    F -->|No| R3[REJECT<br/>VALUE_NULL]
+    F -->|Yes| G[Use observation value]
+
+    E -->|SCALAR| H{Value present?}
+    H -->|No| I[Use numunit scalar]
+    H -->|Yes| J{Value equals scalar?}
+    J -->|No| R4[REJECT<br/>VALUE_NOT_EQUAL_TO_NUMUNIT]
+    J -->|Yes| G
+
+    E -->|RANGE| K{Value present?}
+    K -->|No| L[Use numunit lower and upper bounds]
+    K -->|Yes| M{Value within inclusive range?}
+    M -->|No| R5[REJECT<br/>VALUE_OUTSIDE_NUMUNIT_RANGE]
+    M -->|Yes| G
+
+    G --> N[Resolve exact lower and upper amount]
+    I --> N
+    L --> N
+
+    N --> O{Valid multiplier and amount?}
+
+    O -->|No| R6[REJECT<br/>CONVERSION, NEGATIVE,<br/>or ZERO_NOT_ALLOWED]
+    O -->|Yes| P[ACCEPT]
+
+    P --> Q[Convert lower and upper amounts<br/>to weekly alcohol units]
