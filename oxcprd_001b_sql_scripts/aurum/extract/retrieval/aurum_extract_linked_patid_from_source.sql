@@ -16,3 +16,11 @@ SELECT
   *
 FROM
   aurum_linked.practice_imd;
+
+CALL extract_linked_by_patid_to_table_default ('hes_diagnosis_epi', 'aurum_oxcprd_001b');
+
+CALL extract_linked_by_patid_to_table_default ('hes_diagnosis_hosp', 'aurum_oxcprd_001b');
+
+CALL extract_linked_by_patid_to_table_default ('hes_primary_diag_hosp', 'aurum_oxcprd_001b');
+
+CALL extract_linked_by_patid_to_table_default ('hesop_clinical_apptdate', 'aurum_oxcprd_001b');
