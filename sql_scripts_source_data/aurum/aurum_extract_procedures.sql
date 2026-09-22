@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS extract_log (
    3. Core extractor
    ------------------------------------------------------------------------- */
 
-DELIMITER //
+DELIMITER $$
 
 CREATE OR REPLACE PROCEDURE extract_to_table_core (
     IN p_extract_kind VARCHAR(10),
@@ -634,7 +634,7 @@ BEGIN
     WHERE extract_id = v_extract_id;
 
     SET SESSION group_concat_max_len = v_old_group_concat_max_len;
-END//
+END$$
 
 
 /* -------------------------------------------------------------------------
@@ -663,7 +663,7 @@ BEGIN
         p_overwrite_output,
         p_exclude_pracids
     );
-END//
+END$$
 
 
 CREATE OR REPLACE PROCEDURE extract_by_code_to_table (
@@ -690,7 +690,7 @@ BEGIN
         p_overwrite_output,
         p_exclude_pracids
     );
-END//
+END$$
 
 DELIMITER ;
 

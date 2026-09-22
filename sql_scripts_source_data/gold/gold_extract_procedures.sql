@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS extract_log (
    3. Core extractor
    ------------------------------------------------------------------------- */
 
-DELIMITER //
+DELIMITER $$
 
 CREATE OR REPLACE PROCEDURE extract_to_table_core (
     IN p_extract_kind VARCHAR(10),
@@ -465,7 +465,7 @@ BEGIN
             '`.`',
             REPLACE(p_id_table, '`', '``'),
             '` i ',
-            'STRAIGHT_JOIN `',
+            'JOIN `',
             REPLACE(DATABASE(), '`', '``'),
             '`.`',
             REPLACE(v_source_table, '`', '``'),
@@ -517,7 +517,7 @@ BEGIN
     WHERE extract_id = v_extract_id;
 
     SET SESSION group_concat_max_len = v_old_group_concat_max_len;
-END//
+END$$
 
 
 /* -------------------------------------------------------------------------
@@ -544,7 +544,7 @@ BEGIN
         p_output_table,
         p_overwrite_output
     );
-END//
+END$$
 
 
 CREATE OR REPLACE PROCEDURE extract_by_code_to_table (
@@ -569,7 +569,7 @@ BEGIN
         p_output_table,
         p_overwrite_output
     );
-END//
+END$$
 
 CREATE OR REPLACE PROCEDURE extract_by_adid_to_table (
     IN p_source_family VARCHAR(64),
@@ -584,7 +584,7 @@ BEGIN
         'ADID', p_source_family, p_output_database, p_adid_table,
         NULL, NULL, p_columns, p_output_table, p_overwrite_output
     );
-END//
+END$$
 
 DELIMITER ;
 
