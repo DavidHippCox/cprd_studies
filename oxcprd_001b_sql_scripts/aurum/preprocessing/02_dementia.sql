@@ -4,8 +4,9 @@
 -- terms and subtype labels are joined back from the codelists after the
 -- index date has been selected.
 --
+-- Mild cognitive impairment codes are excluded at source.
+--
 -- Specificity values:
---   0 = mild cognitive impairment (retained for QC, not an index candidate)
 --   1 = unspecified dementia
 --   2 = specified dementia subtype
 USE aurum_oxcprd_001b;
@@ -47,7 +48,7 @@ CREATE TABLE preproc_dementia_events (
   medcodeid BIGINT UNSIGNED NULL,
   icd10 VARCHAR(9) NULL,
   specificity TINYINT UNSIGNED NOT NULL,
-  CHECK (specificity IN (0, 1, 2))
+  CHECK (specificity IN (1, 2))
 ) ENGINE = InnoDB;
 
 /* CPRD observations */
@@ -60,7 +61,6 @@ SELECT
   o.medcodeid,
   NULL,
   CASE
-    WHEN LOWER(TRIM(c.subtype)) = 'mild cognitive impairment' THEN 0
     WHEN LOWER(TRIM(c.subtype)) = 'unspecified' THEN 1
     ELSE 2
   END
@@ -71,8 +71,11 @@ FROM
 WHERE
   o.obsdate IS NOT NULL
   AND o.obsdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR) -- observations after 18 years old
-  -- no family history
-  AND o.obstypeid <> 4;
+  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment';
+
+-- no family history
+-
+AND o.obstypeid <> 4;
 
 /* CPRD dementia drugs */
 INSERT INTO
@@ -102,7 +105,6 @@ SELECT
   NULL,
   h.ICD,
   CASE
-    WHEN LOWER(TRIM(c.subtype)) = 'mild cognitive impairment' THEN 0
     WHEN LOWER(TRIM(c.subtype)) = 'unspecified' THEN 1
     ELSE 2
   END
@@ -112,7 +114,8 @@ FROM
   INNER JOIN preproc_patient_candidates AS p ON p.patid = h.patid
 WHERE
   h.epistart IS NOT NULL
-  AND h.epistart >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR);
+  AND h.epistart >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
+  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment';
 
 /* HES APC hospital diagnoses */
 INSERT INTO
@@ -124,7 +127,6 @@ SELECT
   NULL,
   h.ICD,
   CASE
-    WHEN LOWER(TRIM(c.subtype)) = 'mild cognitive impairment' THEN 0
     WHEN LOWER(TRIM(c.subtype)) = 'unspecified' THEN 1
     ELSE 2
   END
@@ -134,7 +136,8 @@ FROM
   INNER JOIN preproc_patient_candidates AS p ON p.patid = h.patid
 WHERE
   h.admidate IS NOT NULL
-  AND h.admidate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR);
+  AND h.admidate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
+  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment';
 
 /* HES APC primary hospital diagnoses */
 INSERT INTO
@@ -146,7 +149,6 @@ SELECT
   NULL,
   h.ICD_PRIMARY,
   CASE
-    WHEN LOWER(TRIM(c.subtype)) = 'mild cognitive impairment' THEN 0
     WHEN LOWER(TRIM(c.subtype)) = 'unspecified' THEN 1
     ELSE 2
   END
@@ -156,7 +158,8 @@ FROM
   INNER JOIN preproc_patient_candidates AS p ON p.patid = h.patid
 WHERE
   h.admidate IS NOT NULL
-  AND h.admidate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR);
+  AND h.admidate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
+  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment';
 
 /* HES outpatient diagnoses */
 INSERT INTO
@@ -168,7 +171,6 @@ SELECT
   NULL,
   h.icd,
   CASE
-    WHEN LOWER(TRIM(c.subtype)) = 'mild cognitive impairment' THEN 0
     WHEN LOWER(TRIM(c.subtype)) = 'unspecified' THEN 1
     ELSE 2
   END
@@ -178,7 +180,8 @@ FROM
   INNER JOIN preproc_patient_candidates AS p ON p.patid = h.patid
 WHERE
   h.apptdate IS NOT NULL
-  AND h.apptdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR);
+  AND h.apptdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
+  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment';
 
 -- Cover first-date selection and same-day source resolution.
 ALTER TABLE preproc_dementia_events

@@ -2,21 +2,20 @@
 --
 -- Rules:
 --   1. Events before age 18 were removed in 02_dementia.sql.
---   2. MCI events remain available for QC but cannot determine eligibility
---      or become the dementia index event.
---   3. The first non-MCI event determines patient eligibility. HES wins a
---      same-day HES/CPRD tie.
+--   2. MCI events were removed in 02_dementia.sql.
+--   3. The first event determines patient eligibility. HES wins a same-day
+--      HES/CPRD tie.
 --   4. CPRD events are eligible from latest_2 through earliest_4.
 --   5. HES events are eligible from 1998-01-02 through the earlier of
 --      2024-06-24 and merged_death.
---   6. If the first non-MCI event is eligible, its date is the index date.
---   7. Only eligible, non-MCI rows on the index date are resolved.
+--   6. If the first event is eligible, its date is the index date.
+--   7. Only eligible rows on the index date are resolved.
 --   8. A specified subtype is preferred to Unspecified.
 --   9. More than one distinct specified subtype on the index date is Mixed.
 USE aurum_oxcprd_001b;
 
 /* -------------------------------------------------------------------------
-1. Find the first non-MCI event date
+1. Find the first event date
 ------------------------------------------------------------------------- */
 DROP TEMPORARY TABLE IF EXISTS tmp_dementia_first_dates;
 
@@ -29,8 +28,6 @@ SELECT
   MIN(eventdate)
 FROM
   preproc_dementia_events
-WHERE
-  specificity > 0
 GROUP BY
   patid;
 
@@ -82,14 +79,12 @@ FROM
       AND e.eventdate = d.eventdate
       INNER JOIN dementia_event_sources AS s ON s.source_id = e.source_id
       INNER JOIN preproc_patient_candidates AS p ON p.patid = e.patid
-    WHERE
-      e.specificity > 0
   ) AS r
 WHERE
   r.event_rank = 1;
 
 /* -------------------------------------------------------------------------
-3. Resolve eligible, non-MCI rows on the index date
+3. Resolve eligible rows on the index date
 ------------------------------------------------------------------------- */
 DROP TEMPORARY TABLE IF EXISTS tmp_dementia_index_day;
 
@@ -159,8 +154,7 @@ FROM
   LEFT JOIN dementia_codes_icd10 AS h ON s.source_dataset = 'hes'
   AND h.icd10 = e.icd10
 WHERE
-  e.specificity > 0
-  AND (
+  (
     (
       s.source_dataset = 'cprd'
       AND e.eventdate >= p.latest_2
@@ -285,6 +279,8 @@ WHERE
 
 -- Remove superseded QC tables so stale outputs cannot be mistaken for current
 -- results.
+DROP TABLE IF EXISTS qc_dementia_index_counts;
+
 CREATE TABLE qc_dementia_index_counts (
   stage_order SMALLINT UNSIGNED NOT NULL,
   stage VARCHAR(80) NOT NULL,
@@ -297,72 +293,25 @@ CREATE TABLE qc_dementia_index_counts (
 INSERT INTO
   qc_dementia_index_counts (stage_order, stage, n_records, n_patients)
 SELECT
-  stages.stage_order,
-  stages.stage,
-  CASE stages.stage_order
-    WHEN 1 THEN c.all_records
-    WHEN 2 THEN c.mci_records
-    WHEN 3 THEN c.non_mci_records
-  END AS n_records,
-  CASE stages.stage_order
-    WHEN 1 THEN c.all_patients
-    WHEN 2 THEN c.mci_patients
-    WHEN 3 THEN c.non_mci_patients
-  END AS n_patients
+  1,
+  'valid source events',
+  COUNT(*),
+  COUNT(DISTINCT patid)
 FROM
-  (
-    SELECT
-      COUNT(*) AS all_records,
-      COUNT(DISTINCT patid) AS all_patients,
-      COUNT(
-        CASE
-          WHEN specificity = 0 THEN 1
-        END
-      ) AS mci_records,
-      COUNT(
-        DISTINCT CASE
-          WHEN specificity = 0 THEN patid
-        END
-      ) AS mci_patients,
-      COUNT(
-        CASE
-          WHEN specificity > 0 THEN 1
-        END
-      ) AS non_mci_records,
-      COUNT(
-        DISTINCT CASE
-          WHEN specificity > 0 THEN patid
-        END
-      ) AS non_mci_patients
-    FROM
-      preproc_dementia_events
-  ) AS c
-  CROSS JOIN (
-    SELECT
-      1 AS stage_order,
-      'valid source events' AS stage
-    UNION ALL
-    SELECT
-      2,
-      'MCI events retained but not used'
-    UNION ALL
-    SELECT
-      3,
-      'non-MCI events considered'
-  ) AS stages;
+  preproc_dementia_events;
 
 INSERT INTO
   qc_dementia_index_counts (stage_order, stage, n_records, n_patients)
 SELECT
-  4,
-  'first non-MCI events',
+  2,
+  'first events',
   COUNT(*),
   COUNT(*)
 FROM
   tmp_dementia_first_events
 UNION ALL
 SELECT
-  5,
+  3,
   'patients excluded by first-event eligibility',
   COUNT(
     CASE
@@ -378,7 +327,7 @@ FROM
   tmp_dementia_first_events
 UNION ALL
 SELECT
-  6,
+  4,
   'eligible patients and index dates',
   COUNT(
     CASE
@@ -394,15 +343,15 @@ FROM
   tmp_dementia_first_events
 UNION ALL
 SELECT
-  7,
-  'eligible non-MCI index-day records',
+  5,
+  'eligible index-day records',
   COUNT(*),
   COUNT(DISTINCT patid)
 FROM
   tmp_dementia_index_day
 UNION ALL
 SELECT
-  8,
+  6,
   'mixed index-date specified records',
   COUNT(*),
   COUNT(DISTINCT patid)
@@ -410,7 +359,7 @@ FROM
   qc_dementia_index_mixed_records
 UNION ALL
 SELECT
-  9,
+  7,
   'final dementia index',
   COUNT(*),
   COUNT(*)

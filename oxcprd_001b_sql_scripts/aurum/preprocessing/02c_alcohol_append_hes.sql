@@ -44,6 +44,7 @@ FROM
 WHERE
   icd10 IS NOT NULL
   AND icd10 <> ''
+  --not F10.0 (accute intoxification)
   AND icd10 <> 'F10.0';
 
 -- do not include accute intoxification 
