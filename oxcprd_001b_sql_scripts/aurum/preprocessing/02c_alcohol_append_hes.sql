@@ -22,39 +22,25 @@
 USE aurum_oxcprd_001b;
 
 /* -------------------------------------------------------------------------
-1. ICD-10 alcohol codelist used to label HES events
-------------------------------------------------------------------------- */
-DROP TEMPORARY TABLE IF EXISTS tmp_alcohol_icd10_codes;
-
-CREATE TEMPORARY TABLE tmp_alcohol_icd10_codes (
-  icd10 VARCHAR(9) NOT NULL,
-  term VARCHAR(255) NULL,
-  strict_phenotype VARCHAR(255) NULL,
-  PRIMARY KEY (icd10)
-) ENGINE = InnoDB;
-
-INSERT INTO
-  tmp_alcohol_icd10_codes (icd10, term, strict_phenotype)
-SELECT
-  icd10,
-  `description` AS term,
-  strict_phenotype
-FROM
-  alcohol_codes_icd10
-WHERE
-  icd10 IS NOT NULL
-  AND icd10 <> ''
-  --not F10.0 (accute intoxification)
-  AND icd10 <> 'F10.0';
-
--- do not include accute intoxification 
-/* -------------------------------------------------------------------------
-2. Combine classified CPRD observations with HES AUD events
+1. Combine classified CPRD observations with HES AUD events
 ------------------------------------------------------------------------- */
 DROP TABLE IF EXISTS aurum_oxcprd_001b.preproc_alcohol_events;
 
 CREATE TABLE aurum_oxcprd_001b.preproc_alcohol_events ENGINE = InnoDB AS
 WITH
+  alcohol_icd10_codes AS (
+    SELECT
+      icd10,
+      `description` AS term,
+      strict_phenotype
+    FROM
+      alcohol_codes_icd10
+    WHERE
+      icd10 IS NOT NULL
+      AND icd10 <> ''
+      -- Do not include acute intoxication.
+      AND icd10 <> 'F10.0'
+  ),
   alcohol_events AS (
     /* ---------------------------------------------------------------------
     CPRD: already classified alcohol observations
@@ -97,7 +83,7 @@ WITH
       CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
     FROM
       alcohol_hes_diagnosis_epi AS h
-      INNER JOIN tmp_alcohol_icd10_codes AS il ON il.icd10 = h.icd
+      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd
     UNION ALL
     /* ---------------------------------------------------------------------
     HES APC: hospital diagnoses
@@ -119,7 +105,7 @@ WITH
       CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
     FROM
       alcohol_hes_diagnosis_hosp AS h
-      INNER JOIN tmp_alcohol_icd10_codes AS il ON il.icd10 = h.icd
+      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd
     UNION ALL
     /* ---------------------------------------------------------------------
     HES APC: primary hospital diagnosis
@@ -141,7 +127,7 @@ WITH
       CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
     FROM
       alcohol_hes_primary_diag_hosp AS h
-      INNER JOIN tmp_alcohol_icd10_codes AS il ON il.icd10 = h.icd_primary
+      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd_primary
     UNION ALL
     /* ---------------------------------------------------------------------
     HES outpatient
@@ -163,7 +149,7 @@ WITH
       CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
     FROM
       alcohol_hesop_clinical_apptdate AS h
-      INNER JOIN tmp_alcohol_icd10_codes AS il ON il.icd10 = h.icd
+      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd
   )
 SELECT
   e.source_table,
@@ -210,7 +196,7 @@ ADD INDEX idx_alcohol_events_category (alc_category),
 ADD INDEX idx_alcohol_events_category_2 (alc_category_2);
 
 /* -------------------------------------------------------------------------
-3. QC summary
+2. QC summary
 ------------------------------------------------------------------------- */
 DROP TABLE IF EXISTS aurum_oxcprd_001b.qc_alcohol_event_counts;
 
@@ -233,8 +219,3 @@ GROUP BY
   alc_category_status,
   alc_category_2,
   alc_category_2_status;
-
-/* -------------------------------------------------------------------------
-4. Cleanup
-------------------------------------------------------------------------- */
-DROP TEMPORARY TABLE IF EXISTS tmp_alcohol_icd10_codes;

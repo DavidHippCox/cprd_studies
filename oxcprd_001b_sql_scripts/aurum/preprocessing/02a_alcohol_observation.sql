@@ -1,98 +1,23 @@
--- Required source codelists:
---   v0_alcohol_codes_AURUM
---   alcohol_codes_icd10
---
 -- Required event/patient tables:
---   pc_observation
---   hes_diagnosis_epi
---   hes_diagnosis_hosp
---   hes_primary_diag_hosp
---   hesop_clinical
---   hesop_appointment
---   preproc_patient_candidates
+--   alcohol_observation
+--   aurum_alcohol.alcohol_unit_aurum
+--   aurum_alcohol.alcohol_unit_numunitid_aurum
 --
 -- Assumptions:
---   * Each source codelist contains at most one row per code.
 --   * Medcodeid present in alcohol_unit_aurum iff alc_category = 'check_upd'!
-/* -------------------------------------------------------------------------
-1. Session-scoped codelists
-------------------------------------------------------------------------- */
+
 USE aurum_oxcprd_001b;
 
-DROP TEMPORARY TABLE IF EXISTS tmp_alcohol_cprd_codes;
-
-CREATE TEMPORARY TABLE tmp_alcohol_cprd_codes (
-  medcodeid BIGINT UNSIGNED NOT NULL,
-  term TEXT NULL,
-  alc_category VARCHAR(255) NULL,
-  strict_phenotype VARCHAR(255) NULL,
-  PRIMARY KEY (medcodeid)
-) ENGINE = InnoDB;
-
-INSERT INTO
-  tmp_alcohol_cprd_codes (medcodeid, term, alc_category, strict_phenotype)
-SELECT
-  medcodeid,
-  term,
-  alc_category,
-  strict_phenotype
-FROM
-  v0_alcohol_codes_AURUM
-WHERE
-  medcodeid IS NOT NULL;
-
-DROP TEMPORARY TABLE IF EXISTS tmp_alcohol_icd10_codes;
-
-CREATE TEMPORARY TABLE tmp_alcohol_icd10_codes (
-  icd10 VARCHAR(9) NOT NULL,
-  term TEXT NULL,
-  alc_category VARCHAR(255) NULL,
-  strict_phenotype VARCHAR(255) NULL,
-  PRIMARY KEY (icd10)
-) ENGINE = InnoDB;
-
-INSERT INTO
-  tmp_alcohol_icd10_codes (icd10, term, alc_category, strict_phenotype)
-SELECT
-  icd10,
-  term,
-  alc_category,
-  strict_phenotype
-FROM
-  alcohol_codes_icd10
-WHERE
-  icd10 IS NOT NULL
-  AND icd10 <> '';
-
 /* -------------------------------------------------------------------------
-2. Filtered Aurum Observation events
+1. Filtered Aurum Observation events
 ------------------------------------------------------------------------- */
--- check the unique values of alc_category in tmp_alcohol_cprd_codes
--- select distinct(alc_category) from tmp_alcohol_cprd_codes/v0_alcohol_codes_AURUM;
+-- check the unique values of alc_category in v0_alcohol_codes_AURUM
+-- select distinct alc_category from v0_alcohol_codes_AURUM;
 -- {aud, check_upd, light-drinker, moderate-drinker, non-drinker, alc_test} (no NUlls)
-DROP TABLE IF EXISTS alcohol_observation;
-
-CREATE TABLE alcohol_observation ENGINE = InnoDB AS
-SELECT
-  o.patid,
-  o.obsdate AS eventdate,
-  o.medcodeid,
-  o.obstypeid,
-  o.`value`,
-  o.numunitid,
-  cl.term,
-  cl.alc_category,
-  cl.strict_phenotype
-FROM
-  observation AS o
-  INNER JOIN tmp_alcohol_cprd_codes AS cl ON cl.medcodeid = o.medcodeid
-  -- CPRD Aurum ObsType 4 is Family history. 
+DELETE FROM alcohol_observation
+-- CPRD Aurum ObsType 4 is Family history. 
 WHERE
-  o.obstypeid <> 4;
-
-ALTER TABLE alcohol_observation
-ADD INDEX idx_patid_eventdate (patid, eventdate),
-ADD INDEX idx_medcodeid_eventdate (medcodeid, eventdate);
+  obstypeid = 4;
 
 -- retrieve alcohol unit observations for codes that have alc_category "check_upd" i.e medcodeids in alcohol_unit_aurum
 CREATE TABLE aurum_alcohol.alcohol_units_observation_classified AS
