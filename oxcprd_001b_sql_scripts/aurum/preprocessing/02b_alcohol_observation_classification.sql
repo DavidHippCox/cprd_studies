@@ -10,7 +10,7 @@
 --     observations from codelist codes originally labelled 'check_upd'.
 --     Only rows accepted by the unit-resolution logic are used here.
 --   * alcohol_phenotype_observation contains directly classified CPRD
---     observations: aud, light-drinker, moderate-drinker and non-drinker.
+--     observations: aud, light-drinker, heavy-drinker and non-drinker.
 --     alc_test was excluded upstream and needs no handling here.
 --
 -- AUD thresholds:
@@ -134,7 +134,7 @@ WITH
         AND u.weekly_units_high = 0 THEN 'non-drinker'
         WHEN u.weekly_units_low > u.aud_threshold THEN 'aud'
         WHEN u.weekly_units_high <= 14 THEN 'light-drinker'
-        ELSE 'moderate-drinker'
+        ELSE 'heavy-drinker'
       END AS alc_category,
       CASE
         WHEN u.data_reject_reason IS NOT NULL THEN 'REJECT'
@@ -153,7 +153,7 @@ WITH
         AND u.weekly_units_high <= 7 THEN 'trivial-drinker'
         WHEN u.weekly_units_low > 7
         AND u.weekly_units_high <= 14 THEN 'light-moderate'
-        ELSE 'moderate-drinker'
+        ELSE 'heavy-drinker'
       END AS alc_category_2,
       CASE
         WHEN u.data_reject_reason IS NOT NULL THEN 'REJECT'
@@ -346,7 +346,7 @@ select alc_category, count(distinct(patid)) as count_distinct_patid from alcohol
 | NULL             |                  387 |
 | aud              |               106130 |
 | light-drinker    |               769439 |
-| moderate-drinker |               193077 |
+| heavy-drinker    |               193077 |
 | non-drinker      |               803784 |
 +------------------+----------------------+
 
@@ -357,7 +357,7 @@ select alc_category_2, count(distinct(patid)) as count_distinct_patid from alcoh
 | NULL             |                98238 |
 | aud              |               106130 |
 | light-moderate   |               246542 |
-| moderate-drinker |               193077 |
+| heavy-drinker    |               193077 |
 | non-drinker      |               803784 |
 | trivial-drinker  |               656490 |
 +------------------+----------------------+

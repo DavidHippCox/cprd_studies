@@ -1,11 +1,10 @@
 -- Required event/patient tables:
 --   alcohol_observation
---   aurum_alcohol.alcohol_unit_aurum
---   aurum_alcohol.alcohol_unit_numunitid_aurum
+--   aurum_oxcprd_001b.alcohol_unit_aurum
+--   aurum_oxcprd_001b.alcohol_unit_numunitid_aurum
 --
 -- Assumptions:
 --   * Medcodeid present in alcohol_unit_aurum iff alc_category = 'check_upd'!
-
 USE aurum_oxcprd_001b;
 
 /* -------------------------------------------------------------------------
@@ -13,14 +12,14 @@ USE aurum_oxcprd_001b;
 ------------------------------------------------------------------------- */
 -- check the unique values of alc_category in v0_alcohol_codes_AURUM
 -- select distinct alc_category from v0_alcohol_codes_AURUM;
--- {aud, check_upd, light-drinker, moderate-drinker, non-drinker, alc_test} (no NUlls)
+-- {aud, check_upd, light-drinker, heavy-drinker, non-drinker, alc_test} (no NUlls)
 DELETE FROM alcohol_observation
 -- CPRD Aurum ObsType 4 is Family history. 
 WHERE
   obstypeid = 4;
 
 -- retrieve alcohol unit observations for codes that have alc_category "check_upd" i.e medcodeids in alcohol_unit_aurum
-CREATE TABLE aurum_alcohol.alcohol_units_observation_classified AS
+CREATE TABLE aurum_oxcprd_001b.alcohol_units_observation_classified AS
 WITH
   resolved AS (
     SELECT
@@ -62,8 +61,8 @@ WITH
       END AS resolved_high
     FROM
       alcohol_observation AS o
-      INNER JOIN aurum_alcohol.alcohol_unit_aurum AS m ON m.medcodeid = o.medcodeid
-      LEFT JOIN aurum_alcohol.alcohol_unit_numunitid_aurum AS n ON n.numunitid = o.numunitid
+      INNER JOIN aurum_oxcprd_001b.alcohol_unit_aurum AS m ON m.medcodeid = o.medcodeid
+      LEFT JOIN aurum_oxcprd_001b.alcohol_unit_numunitid_aurum AS n ON n.numunitid = o.numunitid
   ),
   classified AS (
     SELECT
@@ -123,11 +122,11 @@ SELECT
 FROM
   classified AS c;
 
-CREATE INDEX idx_patid ON aurum_alcohol.alcohol_units_observation_classified (patid, eventdate);
+CREATE INDEX idx_patid ON aurum_oxcprd_001b.alcohol_units_observation_classified (patid, eventdate);
 
-CREATE INDEX idx_numunitid ON aurum_alcohol.alcohol_units_observation_classified (numunitid);
+CREATE INDEX idx_numunitid ON aurum_oxcprd_001b.alcohol_units_observation_classified (numunitid);
 
--- create table from alcohol_observations where alc_category is in (aud, light-drinker (with units), moderate-drinker (with units)
+-- create table from alcohol_observations where alc_category is in (aud, light-drinker (with units), heavy-drinker (with units)
 -- non-drinker (we do not include 'alc_test')
 CREATE TABLE alcohol_phenotype_observation ENGINE = InnoDB AS
 SELECT
@@ -143,4 +142,4 @@ SELECT
 FROM
   alcohol_observation AS ao
 WHERE
-  ao.alc_category IN ('aud', 'light-drinker', 'moderate-drinker', 'non-drinker');
+  ao.alc_category IN ('aud', 'light-drinker', 'heavy-drinker', 'non-drinker');

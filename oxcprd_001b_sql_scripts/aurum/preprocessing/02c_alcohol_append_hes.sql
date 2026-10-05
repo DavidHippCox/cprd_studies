@@ -7,7 +7,7 @@
 -- We are only using 'aud' codes from hes i.e not F10.0 (accute intoxification)
 -- future work should consider potential exclusion of patients if highest
 -- alcohol recording before indexdate (dementia incidence) 
--- is lower than moderate-drinking status 
+-- is lower than heavy-drinker status 
 --
 -- Only columns required downstream are retained. CPRD-specific measurement
 -- fields (obstypeid, value, numunitid, weekly-unit bounds, gender) are not
