@@ -6,8 +6,7 @@ CALL extract_by_code_to_table (
   'v0_dementia_codes_aurum',
   '1998-01-02',
   '2024-12-31',
-  'patid,obsdate,medcodeid',
-  'obstypeid',
+  'patid,obsdate,medcodeid,obstypeid',
   'dementia_observation',
   TRUE,
   TRUE

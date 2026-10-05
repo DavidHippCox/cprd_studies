@@ -1,9 +1,5 @@
 -- 02. Build a compact dementia event table
 --
--- The event table contains identifiers and classification only. Descriptive
--- terms and subtype labels are joined back from the codelists after the
--- index date has been selected.
---
 -- Mild cognitive impairment codes are excluded at source.
 --
 -- Specificity values:
@@ -71,19 +67,15 @@ FROM
 WHERE
   o.obsdate IS NOT NULL
   AND o.obsdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR) -- observations after 18 years old
-  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment';
+  AND COALESCE(LOWER(TRIM(c.subtype)), '') <> 'mild cognitive impairment'
+  AND o.obstypeid <> 4;
 
--- no family history
--
-AND o.obstypeid <> 4;
-
-/* CPRD dementia drugs */
 INSERT INTO
   preproc_dementia_events (patid, eventdate, source_id, medcodeid, icd10, specificity)
 SELECT
   d.patid,
   d.issuedate,
-  2, -- 
+  2,
   NULL,
   NULL,
   1
