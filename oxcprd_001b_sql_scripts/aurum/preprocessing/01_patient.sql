@@ -1,13 +1,7 @@
 -- run ons_death_dedip.r before this
 -- patient_candidates_mariadb_pipeline_v3.sql
 --
--- MariaDB patient preprocessing pipeline incorporating 01_patient.sql.
--- Source date columns are native DATE columns. The patient year of birth
--- (yob) is assumed to be a four-digit integer year.
 --
--- Final output retains:
---   patid, pracid, regstartdate, regenddate, gender, yob_date
--- plus linkage fields and fields derived by this pipeline.
 USE aurum_oxcprd_001b;
 
 DROP TABLE IF EXISTS v_qc_patient_exclusions;
@@ -136,10 +130,10 @@ SELECT
   d.patid,
   MIN(d.dementia_eventdate) AS first_diag
 FROM
-  candidate_patids AS d -- mci included as dementia code? 
+  candidate_patids AS d -- mci included as dementia code
   INNER JOIN v_patient_earliest_4_latest_2 AS p ON p.patid = d.patid
 WHERE
-  -- dementia_event after 18 years old (remove 1899 observations)
+  -- dementia_event after 18 years old (remove observations that occur during the year 1899/1860)
   d.dementia_eventdate > DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
 GROUP BY
   d.patid;
@@ -180,7 +174,8 @@ FROM
   INNER JOIN v_candidate_first_diagnosis AS d ON d.patid = p.patid
 WHERE
   d.first_diag >= DATE_ADD(p.yob_date, INTERVAL 40 YEAR)
-  -- remove patients with first dementia/mci diagnosis before the age of 40
+  AND d.first_diag <= DATE_ADD(p.yob_date, INTERVAL 100 YEAR)
+  -- remove patients with first dementia/mci diagnosis before the age of 40 and after 100
   AND (
     p.merged_death IS NULL
     OR DATE_ADD(p.regstartdate, INTERVAL 12 MONTH) <= p.merged_death -- in practice for at least a 1 year part 2 (merged_death instead of lcd in part 1)
@@ -195,6 +190,10 @@ WHERE
     p.regstartdate IS NULL
     OR p.regstartdate >= DATE '1900-01-01'
     -- first reg before 1900-01-01 (redundant by prior step - keep for now)
+    AND p.hes_apc_e = 1
+    AND p.hes_op_e = 1
+    AND p.ons_death_e = 1
+    AND p.lsoa_e = 1
   );
 
 CREATE INDEX idx_patid ON preproc_patient_candidates (patid);
