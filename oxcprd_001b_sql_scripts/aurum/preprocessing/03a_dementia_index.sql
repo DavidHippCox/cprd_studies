@@ -1,25 +1,26 @@
--- 03. Select one dementia index event per eligible patient
+-- 03a. Select one dementia index event per eligible patient
 --
 -- Rules:
 --   1. Events before age 18 were removed in 02_dementia.sql.
 --   2. MCI events were removed in 02_dementia.sql.
---   3. The first event determines patient eligibility. HES wins a same-day
---      HES/CPRD tie.
---   4. CPRD events are eligible from latest_2 through earliest_4.
---   5. HES events are eligible from 1998-01-02 through the earlier of
+--   3. Find the first event date before applying eligibility criteria.
+--   4. If the preferred event on the first date is ineligible, exclude the
+--      patient completely. HES wins a same-day HES/CPRD tie.
+--   5. CPRD events are eligible from latest_2 through earliest_4.
+--   6. HES events are eligible from 1998-01-02 through the earlier of
 --      2024-06-24 and merged_death.
---   6. If the first event is eligible, its date is the index date.
---   7. Only eligible rows on the index date are resolved.
---   8. A specified subtype is preferred to Unspecified.
---   9. More than one distinct specified subtype on the index date is Mixed.
+--   7. If the first date is eligible, it is the dementia index date.
+--   8. Only individually eligible records on the index date are resolved.
+--   9. A specified subtype is preferred to Unspecified.
+--  10. At least two distinct specified subtypes on the index date is Mixed.
 USE aurum_oxcprd_001b;
 
 /* -------------------------------------------------------------------------
-1. Find the first event date
+1. Find the first event date before applying eligibility criteria
 ------------------------------------------------------------------------- */
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_first_dates;
+DROP TABLE IF EXISTS tmp_dementia_first_dates;
 
-CREATE TEMPORARY TABLE tmp_dementia_first_dates (patid BIGINT UNSIGNED NOT NULL, eventdate DATE NOT NULL, PRIMARY KEY (patid)) ENGINE = InnoDB;
+CREATE TABLE tmp_dementia_first_dates (patid BIGINT UNSIGNED NOT NULL, eventdate DATE NOT NULL, PRIMARY KEY (patid)) ENGINE = InnoDB;
 
 INSERT INTO
   tmp_dementia_first_dates (patid, eventdate)
@@ -32,64 +33,14 @@ GROUP BY
   patid;
 
 /* -------------------------------------------------------------------------
-2. Apply the same-day source priority and assess eligibility
+2. Assess the first date and retain its eligible records
+If it is ineligible, the patient is excluded.
+For retained patients, all individually eligible records on the first date
+are available for subtype resolution.
 ------------------------------------------------------------------------- */
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_first_events;
+DROP TABLE IF EXISTS tmp_dementia_index_day;
 
-CREATE TEMPORARY TABLE tmp_dementia_first_events (
-  patid BIGINT UNSIGNED NOT NULL,
-  eventdate DATE NOT NULL,
-  source_id TINYINT UNSIGNED NOT NULL,
-  event_eligible TINYINT UNSIGNED NOT NULL,
-  PRIMARY KEY (patid)
-) ENGINE = InnoDB;
-
-INSERT INTO
-  tmp_dementia_first_events (patid, eventdate, source_id, event_eligible)
-SELECT
-  r.patid,
-  r.eventdate,
-  r.source_id,
-  r.event_eligible
-FROM
-  (
-    SELECT
-      e.patid,
-      e.eventdate,
-      e.source_id,
-      CASE
-        WHEN s.source_dataset = 'cprd'
-        AND e.eventdate >= p.latest_2
-        AND e.eventdate <= p.earliest_4 THEN 1
-        WHEN s.source_dataset = 'hes'
-        AND e.eventdate >= DATE '1998-01-02'
-        AND e.eventdate <= LEAST(DATE '2024-06-24', COALESCE(p.merged_death, DATE '2024-06-24')) THEN 1
-        ELSE 0
-      END AS event_eligible,
-      ROW_NUMBER() OVER (
-        PARTITION BY
-          e.patid
-        ORDER BY
-          s.source_priority,
-          e.source_id
-      ) AS event_rank
-    FROM
-      tmp_dementia_first_dates AS d
-      INNER JOIN preproc_dementia_events AS e ON e.patid = d.patid
-      AND e.eventdate = d.eventdate
-      INNER JOIN dementia_event_sources AS s ON s.source_id = e.source_id
-      INNER JOIN preproc_patient_candidates AS p ON p.patid = e.patid
-  ) AS r
-WHERE
-  r.event_rank = 1;
-
-/* -------------------------------------------------------------------------
-3. Resolve eligible rows on the index date
-------------------------------------------------------------------------- */
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_index_day;
-
-CREATE TEMPORARY TABLE tmp_dementia_index_day (
-  source_id TINYINT UNSIGNED NOT NULL,
+CREATE TABLE tmp_dementia_index_day (
   patid BIGINT UNSIGNED NOT NULL,
   eventdate DATE NOT NULL,
   medcodeid BIGINT UNSIGNED NULL,
@@ -102,113 +53,163 @@ CREATE TEMPORARY TABLE tmp_dementia_index_day (
 ) ENGINE = InnoDB;
 
 INSERT INTO
-  tmp_dementia_index_day (
-    source_id,
-    patid,
-    eventdate,
-    medcodeid,
-    icd10,
-    term,
-    subtype,
-    specificity,
-    selection_rank
-  )
-SELECT
-  e.source_id,
-  e.patid,
-  e.eventdate,
-  e.medcodeid,
-  e.icd10,
-  CASE
-    WHEN e.source_id = 1 THEN c.term
-    WHEN e.source_id = 2 THEN 'dementia_drug'
-    ELSE h.`description`
-  END AS term,
-  CASE
-    WHEN e.source_id = 1 THEN c.subtype
-    WHEN e.source_id = 2 THEN 'unspecified'
-    ELSE h.subtype
-  END AS subtype,
-  e.specificity,
-  ROW_NUMBER() OVER (
-    PARTITION BY
-      e.patid
-    ORDER BY
-      e.specificity DESC,
-      s.source_priority,
+  tmp_dementia_index_day (patid, eventdate, medcodeid, icd10, term, subtype, specificity, selection_rank)
+WITH
+  first_date_events AS (
+    SELECT
       e.source_id,
-      e.icd10 IS NULL,
+      e.patid,
+      e.eventdate,
+      e.medcodeid,
       e.icd10,
-      e.medcodeid IS NULL,
-      e.medcodeid
-  ) AS selection_rank
-FROM
-  preproc_dementia_events AS e
-  INNER JOIN tmp_dementia_first_events AS f ON f.patid = e.patid
-  AND f.eventdate = e.eventdate
-  AND f.event_eligible = 1
-  INNER JOIN dementia_event_sources AS s ON s.source_id = e.source_id
-  INNER JOIN preproc_patient_candidates AS p ON p.patid = e.patid
-  LEFT JOIN v0_dementia_codes_AURUM AS c ON e.source_id = 1
-  AND c.medcodeid = e.medcodeid
-  LEFT JOIN dementia_codes_icd10 AS h ON s.source_dataset = 'hes'
-  AND h.icd10 = e.icd10
-WHERE
-  (
-    (
-      s.source_dataset = 'cprd'
-      AND e.eventdate >= p.latest_2
-      AND e.eventdate <= p.earliest_4
-    )
-    OR (
-      s.source_dataset = 'hes'
-      AND e.eventdate >= DATE '1998-01-02'
-      AND e.eventdate <= LEAST(DATE '2024-06-24', COALESCE(p.merged_death, DATE '2024-06-24'))
-    )
-  );
-
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_index_day_summary;
-
-CREATE TEMPORARY TABLE tmp_dementia_index_day_summary (
-  patid BIGINT UNSIGNED NOT NULL,
-  eventdate DATE NOT NULL,
-  n_distinct_specified SMALLINT UNSIGNED NOT NULL,
-  mixed_term TEXT NULL,
-  PRIMARY KEY (patid, eventdate)
-) ENGINE = InnoDB;
-
-INSERT INTO
-  tmp_dementia_index_day_summary (patid, eventdate, n_distinct_specified, mixed_term)
+      CASE
+        WHEN e.source_id = 1 THEN c.term
+        WHEN e.source_id = 2 THEN 'dementia_drug'
+        ELSE h.`description`
+      END AS term,
+      CASE
+        WHEN e.source_id = 1 THEN c.subtype
+        WHEN e.source_id = 2 THEN 'unspecified'
+        ELSE h.subtype
+      END AS subtype,
+      e.specificity,
+      s.source_priority,
+      -- eligiblity (0 or 1) of earliest dementia event per patid 
+      CASE
+        WHEN s.source_dataset = 'cprd'
+        AND e.eventdate >= p.latest_2
+        AND e.eventdate <= p.earliest_4 THEN 1
+        WHEN s.source_dataset = 'hes'
+        AND e.eventdate >= DATE '1998-01-02'
+        AND e.eventdate <= LEAST(DATE '2024-06-24', COALESCE(p.merged_death, DATE '2024-06-24')) THEN 1
+        ELSE 0
+      END AS index_date_record_eligible
+    FROM
+      tmp_dementia_first_dates AS d
+      INNER JOIN preproc_dementia_events AS e ON e.patid = d.patid
+      AND e.eventdate = d.eventdate
+      INNER JOIN dementia_event_sources AS s ON s.source_id = e.source_id
+      INNER JOIN preproc_patient_candidates AS p ON p.patid = e.patid
+      LEFT JOIN v0_dementia_codes_AURUM AS c ON e.source_id = 1
+      AND c.medcodeid = e.medcodeid
+      LEFT JOIN dementia_codes_icd10 AS h ON s.source_dataset = 'hes'
+      AND h.icd10 = e.icd10
+  ),
+  -- is patid eligible? 
+  first_date_decisions AS (
+    SELECT
+      e.*,
+      FIRST_VALUE(e.index_date_record_eligible) OVER (
+        PARTITION BY
+          e.patid
+        ORDER BY
+          e.source_priority,
+          e.source_id
+      ) AS patient_eligible_from_first_event
+    FROM
+      first_date_events AS e
+  ),
+  -- exclude patients whose 'preferred' first record was ineligible
+  -- exclude other ineligible same-day records as 'preferred' first event 
+  -- e.g hes 1998 may be acceptable but cprd 1998 may not so we keep hes. 
+  -- remaining records are ranked and first is chosen.
+  eligible_index_day AS (
+    SELECT
+      e.patid,
+      e.eventdate,
+      e.medcodeid,
+      e.icd10,
+      e.term,
+      e.subtype,
+      e.specificity,
+      ROW_NUMBER() OVER (
+        PARTITION BY
+          e.patid
+        ORDER BY
+          e.specificity DESC,
+          e.source_priority,
+          e.source_id,
+          e.icd10 IS NULL,
+          e.icd10,
+          e.medcodeid IS NULL,
+          e.medcodeid
+      ) AS selection_rank
+    FROM
+      first_date_decisions AS e
+    WHERE
+      e.patient_eligible_from_first_event = 1
+      AND e.index_date_record_eligible = 1
+  )
 SELECT
   patid,
   eventdate,
-  COUNT(
-    DISTINCT CASE
-      WHEN specificity = 2 THEN LOWER(TRIM(subtype))
-      ELSE NULL
+  medcodeid,
+  icd10,
+  term,
+  subtype,
+  specificity,
+  selection_rank
+FROM
+  eligible_index_day;
+
+/* -------------------------------------------------------------------------
+3. Identify Mixed dementia indices
+
+Mixed requires at least two distinct normalised specified subtypes on the
+same index date. Duplicate records from one subtype do not create Mixed.
+This is a formal phenotype output because 03b uses contains_alcohol.
+------------------------------------------------------------------------- */
+DROP TABLE IF EXISTS dementia_index_mixed;
+
+CREATE TABLE dementia_index_mixed (
+  patid BIGINT UNSIGNED NOT NULL,
+  eventdate DATE NOT NULL,
+  n_distinct_specified SMALLINT UNSIGNED NOT NULL,
+  mixed_subtypes TEXT NOT NULL,
+  mixed_term TEXT NULL,
+  contains_alcohol TINYINT UNSIGNED NOT NULL,
+  PRIMARY KEY (patid, eventdate),
+  INDEX idx_dementia_index_mixed_alcohol (contains_alcohol)
+) ENGINE = InnoDB;
+
+INSERT INTO
+  dementia_index_mixed (
+    patid,
+    eventdate,
+    n_distinct_specified,
+    mixed_subtypes,
+    mixed_term,
+    contains_alcohol
+  )
+SELECT
+  patid,
+  eventdate,
+  COUNT(DISTINCT LOWER(TRIM(subtype))) AS n_distinct_specified,
+  GROUP_CONCAT(
+    DISTINCT LOWER(TRIM(subtype))
+    ORDER BY
+      LOWER(TRIM(subtype)) SEPARATOR '/'
+  ) AS mixed_subtypes,
+  GROUP_CONCAT(
+    DISTINCT term
+    ORDER BY
+      term SEPARATOR '/'
+  ) AS mixed_term,
+  MAX(
+    CASE
+      WHEN LOWER(TRIM(subtype)) = 'alcohol' THEN 1
+      ELSE 0
     END
-  ) AS n_distinct_specified,
-  CASE
-    WHEN COUNT(
-      DISTINCT CASE
-        WHEN specificity = 2 THEN LOWER(TRIM(subtype))
-        ELSE NULL
-      END
-    ) > 1 THEN GROUP_CONCAT(
-      DISTINCT CASE
-        WHEN specificity = 2 THEN term
-        ELSE NULL
-      END
-      ORDER BY
-        term SEPARATOR '/'
-    )
-    ELSE NULL
-  END AS mixed_term
+  ) AS contains_alcohol
 FROM
   tmp_dementia_index_day
+WHERE
+  specificity = 2
 GROUP BY
   patid,
-  eventdate;
+  eventdate
+HAVING
+  COUNT(DISTINCT LOWER(TRIM(subtype))) >= 2;
 
 /* -------------------------------------------------------------------------
 4. Create one dementia index event per patient
@@ -233,52 +234,31 @@ SELECT
   e.patid,
   e.eventdate,
   CASE
-    WHEN s.n_distinct_specified > 1 THEN 'Mixed'
+    WHEN m.patid IS NOT NULL THEN 'Mixed'
     ELSE e.subtype
   END AS subtype,
   CASE
-    WHEN s.n_distinct_specified > 1 THEN s.mixed_term
+    WHEN m.patid IS NOT NULL THEN m.mixed_term
     ELSE e.term
   END AS term,
   CASE
-    WHEN s.n_distinct_specified > 1 THEN NULL
+    WHEN m.patid IS NOT NULL THEN NULL
     ELSE e.icd10
   END AS icd10,
   CASE
-    WHEN s.n_distinct_specified > 1 THEN NULL
+    WHEN m.patid IS NOT NULL THEN NULL
     ELSE e.medcodeid
   END AS medcodeid
 FROM
   tmp_dementia_index_day AS e
-  INNER JOIN tmp_dementia_index_day_summary AS s ON s.patid = e.patid
-  AND s.eventdate = e.eventdate
+  LEFT JOIN dementia_index_mixed AS m ON m.patid = e.patid
+  AND m.eventdate = e.eventdate
 WHERE
   e.selection_rank = 1;
 
 /* -------------------------------------------------------------------------
 5. Compact QC outputs
 ------------------------------------------------------------------------- */
-DROP TABLE IF EXISTS qc_dementia_index_mixed_records;
-
-CREATE TABLE qc_dementia_index_mixed_records ENGINE = InnoDB AS
-SELECT
-  e.source_id,
-  e.patid,
-  e.eventdate,
-  e.medcodeid,
-  e.icd10,
-  e.term,
-  e.subtype
-FROM
-  tmp_dementia_index_day AS e
-  INNER JOIN tmp_dementia_index_day_summary AS s ON s.patid = e.patid
-  AND s.eventdate = e.eventdate
-WHERE
-  s.n_distinct_specified > 1
-  AND e.specificity = 2;
-
--- Remove superseded QC tables so stale outputs cannot be mistaken for current
--- results.
 DROP TABLE IF EXISTS qc_dementia_index_counts;
 
 CREATE TABLE qc_dementia_index_counts (
@@ -294,56 +274,41 @@ INSERT INTO
   qc_dementia_index_counts (stage_order, stage, n_records, n_patients)
 SELECT
   1,
-  'valid source events',
-  COUNT(*),
-  COUNT(DISTINCT patid)
-FROM
-  preproc_dementia_events;
-
-INSERT INTO
-  qc_dementia_index_counts (stage_order, stage, n_records, n_patients)
-SELECT
-  2,
-  'first events',
+  'first event dates',
   COUNT(*),
   COUNT(*)
 FROM
-  tmp_dementia_first_events
+  tmp_dementia_first_dates
+UNION ALL
+SELECT
+  2,
+  'patients excluded by first-date eligibility',
+  f.n_patients - i.n_patients,
+  f.n_patients - i.n_patients
+FROM
+  (
+    SELECT
+      COUNT(*) AS n_patients
+    FROM
+      tmp_dementia_first_dates
+  ) AS f
+  CROSS JOIN (
+    SELECT
+      COUNT(DISTINCT patid) AS n_patients
+    FROM
+      tmp_dementia_index_day
+  ) AS i
 UNION ALL
 SELECT
   3,
-  'patients excluded by first-event eligibility',
-  COUNT(
-    CASE
-      WHEN event_eligible = 0 THEN 1
-    END
-  ),
-  COUNT(
-    CASE
-      WHEN event_eligible = 0 THEN 1
-    END
-  )
+  'eligible patients and index dates',
+  COUNT(DISTINCT patid),
+  COUNT(DISTINCT patid)
 FROM
-  tmp_dementia_first_events
+  tmp_dementia_index_day
 UNION ALL
 SELECT
   4,
-  'eligible patients and index dates',
-  COUNT(
-    CASE
-      WHEN event_eligible = 1 THEN 1
-    END
-  ),
-  COUNT(
-    CASE
-      WHEN event_eligible = 1 THEN 1
-    END
-  )
-FROM
-  tmp_dementia_first_events
-UNION ALL
-SELECT
-  5,
   'eligible index-day records',
   COUNT(*),
   COUNT(DISTINCT patid)
@@ -351,15 +316,15 @@ FROM
   tmp_dementia_index_day
 UNION ALL
 SELECT
-  6,
-  'mixed index-date specified records',
+  5,
+  'mixed dementia indices',
   COUNT(*),
-  COUNT(DISTINCT patid)
+  COUNT(*)
 FROM
-  qc_dementia_index_mixed_records
+  dementia_index_mixed
 UNION ALL
 SELECT
-  7,
+  6,
   'final dementia index',
   COUNT(*),
   COUNT(*)
@@ -369,10 +334,3 @@ FROM
 /* -------------------------------------------------------------------------
 6. Cleanup
 ------------------------------------------------------------------------- */
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_index_day_summary;
-
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_index_day;
-
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_first_events;
-
-DROP TEMPORARY TABLE IF EXISTS tmp_dementia_first_dates;
