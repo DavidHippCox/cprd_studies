@@ -21,9 +21,17 @@ CREATE TABLE v0_depression_anxiety_codes_AURUM LIKE medcode_template;
 
 CREATE TABLE v0_drug_related_psychiatric_codes_AURUM LIKE medcode_template;
 
-CREATE TABLE v0_neuropsychariatric_codes_AURUM LIKE medcode_template;
+CREATE TABLE v0_neuropsychiatric_codes_AURUM LIKE medcode_template;
 
 CREATE TABLE v0_smi_codes_AURUM LIKE medcode_template;
+
+CREATE TABLE v0_wenicke_encephalopathy_codes_AURUM LIKE medcode_template;
+
+CREATE TABLE v0_diabetes_all_codes_AURUM LIKE medcode_template;
+
+CREATE TABLE v0_hypertension_codes_aurum LIKE medcode_template;
+
+CREATE TABLE v0_ihd_codes_aurum LIKE medcode_template;
 
 CREATE TABLE v0_tbi_codes_AURUM LIKE medcode_template;
 
@@ -43,7 +51,7 @@ ADD COLUMN early_onset VARCHAR(255),
 ADD COLUMN strict_phenotype VARCHAR(255),
 ADD COLUMN comments VARCHAR(255);
 
-ALTER TABLE v0_neuropsychariatric_codes_AURUM
+ALTER TABLE v0_neuropsychiatric_codes_AURUM
 ADD COLUMN nsp_subtype VARCHAR(255);
 
 ALTER TABLE v0_alcohol_codes_AURUM
@@ -56,6 +64,9 @@ ADD COLUMN AT_NF_comments VARCHAR(255);
 ALTER TABLE v0_smoking_codes_aurum
 ADD COLUMN smokstatus VARCHAR(255),
 ADD COLUMN comments VARCHAR(255);
+
+ALTER TABLE v0_diabetes_all_codes_AURUM
+ADD COLUMN category VARCHAR(255);
 
 CREATE TABLE IF NOT EXISTS prodcode_template (
   prodcodeid BIGINT,
@@ -149,11 +160,22 @@ CALL LOAD_FILE(
 );
 
 CALL LOAD_FILE(
-  'aurum/medcodes/v0_neuropsychariatric_codes_AURUM.txt',
-  'v0_neuropsychariatric_codes_AURUM'
+  'aurum/medcodes/v0_neuropsychiatric_codes_AURUM.txt',
+  'v0_neuropsychiatric_codes_AURUM'
 );
 
 CALL LOAD_FILE('aurum/medcodes/v0_smi_codes_AURUM.txt', 'v0_smi_codes_AURUM');
+
+CALL LOAD_FILE(
+  'aurum/medcodes/v0_wenicke_encephalopathy_codes_aurum.txt',
+  'v0_wenicke_encephalopathy_codes_aurum'
+);
+
+CALL LOAD_FILE('aurum/medcodes/v0_diabetes_all_codes_AURUM.txt', 'v0_diabetes_all_codes_AURUM');
+
+CALL LOAD_FILE('aurum/medcodes/v0_hypertension_codes_aurum.txt', 'v0_hypertension_codes_aurum');
+
+CALL LOAD_FILE('aurum/medcodes/v0_ihd_codes_aurum.txt', 'v0_ihd_codes_aurum');
 
 CALL LOAD_FILE('aurum/medcodes/v0_tbi_codes_AURUM.txt', 'v0_tbi_codes_AURUM');
 
@@ -175,116 +197,77 @@ CALL LOAD_FILE('icd10/alcohol_codes_icd10.txt', 'alcohol_codes_icd10');
 
 CALL LOAD_FILE('icd10/dementia_codes_icd10.txt', 'dementia_codes_icd10');
 
-/*
 CREATE TABLE v0_thiamine_drug_AURUM LIKE prodcode_template;
 
 ALTER TABLE v0_thiamine_drug_AURUM
-ADD COLUMN DHC_review VARCHAR(255),
-ADD COLUMN dosage_mg SMALLINT,
-ADD COLUMN exclude_patid_if_within_thimaine_monotherapy_window TINYINT;
+ADD COLUMN dosage_mg SMALLINT;
 
-LOAD DATA INFILE '{{CODELISTS_ROOT}}/codelist_tools/aurum/prodcodes/v0_thiamine_drug_AURUM.txt'
-INTO TABLE v0_thiamine_drug_AURUM
-FIELDS TERMINATED BY '\t'
-LINES TERMINATED BY '\r\n'
-IGNORE 1 LINES
-(
-@prodcodeid,
-@dmdid,
-@termfromemis,
-@productname,
-@formulation,
-@routeofadministration,
-@drugsubstancename,
-@substancestrength,
-@bnfchapter,
-@drugissues,
-@DHC_review,
-@dosage_mg,
-@exclude_patid_if_within_thimaine_monotherapy_window
+LOAD DATA INFILE '{{CODELISTS_ROOT}}/codelist_tools/aurum/prodcodes/v0_thiamine_drug_AURUM.txt' INTO TABLE v0_thiamine_drug_AURUM FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\r\n' IGNORE 1 LINES (
+  @prodcodeid,
+  @dmdid,
+  @termfromemis,
+  @productname,
+  @formulation,
+  @routeofadministration,
+  @drugsubstancename,
+  @substancestrength,
+  @bnfchapter,
+  @drugissues,
+  @dosage_mg
 )
 SET
-prodcodeid = NULLIF(@prodcodeid, ''),
-dmdid = NULLIF(@dmdid, ''),
-termfromemis = NULLIF(@termfromemis, ''),
-productname = NULLIF(@productname, ''),
-formulation = NULLIF(@formulation, ''),
-routeofadministration = NULLIF(@routeofadministration, ''),
-drugsubstancename = NULLIF(@drugsubstancename, ''),
-substancestrength = NULLIF(@substancestrength, ''),
-bnfchapter = NULLIF(@bnfchapter, ''),
-DHC_review = NULLIF(@DHC_review, ''),
-dosage_mg = NULLIF(@dosage_mg, ''),
-exclude_patid_if_within_thimaine_monotherapy_window = NULLIF(@exclude_patid_if_within_thimaine_monotherapy_window, '');
+  prodcodeid = NULLIF(@prodcodeid, ''),
+  dmdid = NULLIF(@dmdid, ''),
+  termfromemis = NULLIF(@termfromemis, ''),
+  productname = NULLIF(@productname, ''),
+  formulation = NULLIF(@formulation, ''),
+  routeofadministration = NULLIF(@routeofadministration, ''),
+  drugsubstancename = NULLIF(@drugsubstancename, ''),
+  substancestrength = NULLIF(@substancestrength, ''),
+  bnfchapter = NULLIF(@bnfchapter, ''),
+  dosage_mg = NULLIF(@dosage_mg, '');
 
-*/
-/*
-
-CREATE TABLE IF NOT EXISTS cprdaurummedical (
-MedCodeId BIGINT UNSIGNED,
-Observations BIGINT UNSIGNED,
-OriginalReadCode TEXT,
-CleansedReadCode TEXT,
-Term TEXT,
-SnomedCTConceptId BIGINT UNSIGNED,
-SnomedCTDescriptionId BIGINT UNSIGNED,
-databaserelease TEXT,
-EmisCodeCategoryId TINYINT,
-PRIMARY KEY (MedCodeId)
+CREATE TABLE v0_bmi_numunitid_aurum (
+  medcodeid BIGINT UNSIGNED NOT NULL,
+  numunitid BIGINT UNSIGNED NOT NULL,
+  numunitid_description VARCHAR(255) NULL,
+  conversion_rule VARCHAR(20) NOT NULL,
+  PRIMARY KEY (medcodeid, numunitid)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-CREATE TABLE IF NOT EXISTS cprdaurumproduct (
-prodcodeid BIGINT,
-dmdid BIGINT UNSIGNED,
-termfromemis VARCHAR(255),
-productname VARCHAR(999),
-formulation VARCHAR(999),
-routeofadministration VARCHAR(999),
-drugsubstancename VARCHAR(999),
-substancestrength VARCHAR(999),
-bnfchapter VARCHAR(999),
-drugissues TEXT,
-PRIMARY KEY (prodcodeid)
+CREATE TABLE v0_weight_numunitid_aurum LIKE v0_bmi_numunitid_aurum;
+
+CREATE TABLE v0_height_numunitid_aurum LIKE v0_bmi_numunitid_aurum;
+
+CREATE TABLE v0_smoking_numunitid_aurum (
+  medcodeid BIGINT UNSIGNED NOT NULL,
+  term VARCHAR(999),
+  numunitid BIGINT UNSIGNED NOT NULL,
+  numunitid_description VARCHAR(255) NULL,
+  source_smokstatus VARCHAR(30) NOT NULL,
+  rule_type VARCHAR(30) NOT NULL,
+  zero_status VARCHAR(30) NOT NULL,
+  positive_status VARCHAR(30) NOT NULL,
+  positive_upper_bound_exclusive DECIMAL(18, 6) NULL,
+  PRIMARY KEY (medcodeid, numunitid)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CALL LOAD_FILE('aurum/medcodes/v0_bmi_numunitid_aurum.txt', 'v0_bmi_numunitid_aurum');
 
-LOAD DATA INFILE
-'{{CODELISTS_ROOT}}/codelist_tools/aurum/medcodes/medical/CPRDAurumMedical_202601.txt'
-INTO TABLE
-cprdaurummedical
-FIELDS TERMINATED BY '\t'
-LINES TERMINATED BY '\r\n'
-IGNORE 1 LINES
-;
+CALL LOAD_FILE('aurum/medcodes/v0_weight_numunitid_aurum.txt', 'v0_weight_numunitid_aurum');
 
-LOAD DATA INFILE '{{CODELISTS_ROOT}}/codelist_tools/aurum/prodcodes/product/CPRDAurumProduct_202601.txt'
-INTO TABLE cprdaurumproduct
-FIELDS TERMINATED BY '\t'
-LINES TERMINATED BY '\r\n'
-IGNORE 1 LINES
-(
-@prodcodeid,
-@dmdid,
-@termfromemis,
-@productname,
-@formulation,
-@routeofadministration,
-@drugsubstancename,
-@substancestrength,
-@bnfchapter,
-@drugissues
+CALL LOAD_FILE('aurum/medcodes/v0_height_numunitid_aurum.txt', 'v0_height_numunitid_aurum');
+
+LOAD DATA INFILE '{{CODELISTS_ROOT}}/codelist_tools/aurum/medcodes/v0_smoking_numunitid_aurum.txt' INTO TABLE v0_smoking_numunitid_aurum CHARACTER SET utf8mb4 FIELDS TERMINATED BY '\t' LINES TERMINATED BY '\r\n' IGNORE 1 LINES (
+  medcodeid,
+  term,
+  numunitid,
+  numunitid_description,
+  source_smokstatus,
+  rule_type,
+  zero_status,
+  positive_status,
+  @positive_upper_bound_exclusive
 )
 SET
-prodcodeid = NULLIF(@prodcodeid, ''),
-dmdid = NULLIF(@dmdid, ''),
-termfromemis = NULLIF(@termfromemis, ''),
-productname = NULLIF(@productname, ''),
-formulation = NULLIF(@formulation, ''),
-routeofadministration = NULLIF(@routeofadministration, ''),
-drugsubstancename = NULLIF(@drugsubstancename, ''),
-substancestrength = NULLIF(@substancestrength, ''),
-bnfchapter = NULLIF(@bnfchapter, ''),
-drugissues = NULLIF(@drugissues, '');
-
-
-*/
+  positive_upper_bound_exclusive = NULLIF(@positive_upper_bound_exclusive, '');
