@@ -35,6 +35,8 @@ CREATE TABLE v0_ihd_codes_aurum LIKE medcode_template;
 
 CREATE TABLE v0_tbi_codes_AURUM LIKE medcode_template;
 
+CREATE TABLE v1_arld_codes_AURUM LIKE medcode_template;
+
 CREATE TABLE v0_alcohol_codes_AURUM LIKE medcode_template;
 
 CREATE TABLE v0_bmi_codes_aurum LIKE medcode_template;
@@ -87,6 +89,13 @@ CREATE TABLE v0_alcohol_drug_AURUM LIKE prodcode_template;
 CREATE TABLE v0_dementia_drug_AURUM LIKE prodcode_template;
 
 CREATE TABLE v0_medication_codes_AURUM LIKE prodcode_template;
+
+ALTER TABLE v0_medication_codes_AURUM
+ADD COLUMN drugtypes VARCHAR(255),
+ADD COLUMN alcohol_detoxification VARCHAR(255);
+
+ALTER TABLE v0_dementia_drug_AURUM
+ADD COLUMN drugtypes VARCHAR(255);
 
 ALTER TABLE v0_medication_codes_AURUM
 ADD COLUMN drugtypes VARCHAR(255),
@@ -178,6 +187,8 @@ CALL LOAD_FILE('aurum/medcodes/v0_hypertension_codes_aurum.txt', 'v0_hypertensio
 CALL LOAD_FILE('aurum/medcodes/v0_ihd_codes_aurum.txt', 'v0_ihd_codes_aurum');
 
 CALL LOAD_FILE('aurum/medcodes/v0_tbi_codes_AURUM.txt', 'v0_tbi_codes_AURUM');
+
+CALL LOAD_FILE('aurum/medcodes/v1_arld_codes_AURUM.txt', 'v1_arld_codes_AURUM');
 
 CALL LOAD_FILE('aurum/medcodes/v0_bmi_codes_AURUM.txt', 'v0_bmi_codes_AURUM');
 
