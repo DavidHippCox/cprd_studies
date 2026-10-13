@@ -1,19 +1,7 @@
--- Smoking status before dementia index for CPRD Aurum.
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 --
--- Depends on:
---   observation
---   v0_smoking_codes_AURUM
---   v0_smoking_numunitid_aurum
---   preproc_patient_alcohol_dementia, including yob_date
---
--- Performance design:
---   * Start from the dementia cohort and use observation(patid, obsdate).
---   * Carry yob_date in the dementia cohort, avoiding a repeated join to
---     preproc_patient_candidates.
---   * Join the numunit lookup only for ambiguous smoking categories.
---   * Retain only columns required by the next stage.
---   * Resolve prior-smoking history with a window rather than a grouped
---     second pass over all ranked rows.
 USE aurum_oxcprd_001b;
 
 /* ----------------------------------------------------------------------
@@ -41,7 +29,7 @@ SELECT
     ELSE NULL
   END AS smoking_status
 FROM
-  preproc_patient_alcohol_dementia AS p
+  analysis_pop AS p
   INNER JOIN observation AS o ON o.patid = p.patid
   AND o.obsdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
   AND o.obsdate <= p.dementia_index_date
@@ -128,7 +116,7 @@ SELECT
     ELSE s.day_smoking_status
   END AS smoking_status
 FROM
-  preproc_patient_alcohol_dementia AS p
+  analysis_pop AS p
   LEFT JOIN tmp_smoking_day_ranked AS s ON s.patid = p.patid
   AND s.recency_rank = 1;
 

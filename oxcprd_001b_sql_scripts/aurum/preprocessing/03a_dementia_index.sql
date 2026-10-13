@@ -1,18 +1,20 @@
--- 03a. Select one dementia index event per eligible patient
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
+-- 
+-- Select one dementia index event per eligible patient
 --
--- Rules:
+-- Algorithm:
 --   1. Events before age 18 were removed in 02_dementia.sql.
 --   2. MCI events were removed in 02_dementia.sql.
 --   3. Find the first event date before applying eligibility criteria.
---   4. If the preferred event on the first date is ineligible, exclude the
+--   4. If the event on the first date is ineligible, exclude the
 --      patient completely. HES wins a same-day HES/CPRD tie.
---   5. CPRD events are eligible from latest_2 through earliest_4.
---   6. HES events are eligible from 1998-01-02 through the earlier of
---      2024-06-24 and merged_death.
---   7. If the first date is eligible, it is the dementia index date.
---   8. Only individually eligible records on the index date are resolved.
---   9. A specified subtype is preferred to Unspecified.
---  10. At least two distinct specified subtypes on the index date is Mixed.
+--   5. CPRD and HES events are eligible from latest_2 through earliest_4.
+--   6. If the first date is eligible, it is the dementia index date.
+--   7. A specified subtype is preferred to Unspecified.
+--  8. At least two distinct specified subtypes on the index date is Mixed unless 
+--  one of the subtypes is alcohol then the subtype is alcohol
 USE aurum_oxcprd_001b;
 
 /* -------------------------------------------------------------------------
@@ -34,9 +36,6 @@ GROUP BY
 
 /* -------------------------------------------------------------------------
 2. Assess the first date and retain its eligible records
-If it is ineligible, the patient is excluded.
-For retained patients, all individually eligible records on the first date
-are available for subtype resolution.
 ------------------------------------------------------------------------- */
 DROP TABLE IF EXISTS tmp_dementia_index_day;
 
@@ -76,12 +75,10 @@ WITH
       s.source_priority,
       -- eligiblity (0 or 1) of earliest dementia event per patid 
       CASE
-        WHEN s.source_dataset = 'cprd'
+        WHEN s.source_dataset IN ('cprd', 'hes')
         AND e.eventdate >= p.latest_2
+        -- remember that we may need to remove patients that have dementia incidence and death same day for fitting models?
         AND e.eventdate <= p.earliest_4 THEN 1
-        WHEN s.source_dataset = 'hes'
-        AND e.eventdate >= DATE '1998-01-02'
-        AND e.eventdate <= LEAST(DATE '2024-06-24', COALESCE(p.merged_death, DATE '2024-06-24')) THEN 1
         ELSE 0
       END AS index_date_record_eligible
     FROM
@@ -109,9 +106,7 @@ WITH
     FROM
       first_date_events AS e
   ),
-  -- exclude patients whose 'preferred' first record was ineligible
-  -- exclude other ineligible same-day records as 'preferred' first event 
-  -- e.g hes 1998 may be acceptable but cprd 1998 may not so we keep hes. 
+  -- exclude patients whose first record was ineligible 
   -- remaining records are ranked and first is chosen.
   eligible_index_day AS (
     SELECT
@@ -157,7 +152,6 @@ FROM
 
 Mixed requires at least two distinct normalised specified subtypes on the
 same index date. Duplicate records from one subtype do not create Mixed.
-This is a formal phenotype output because 03b uses contains_alcohol.
 ------------------------------------------------------------------------- */
 DROP TABLE IF EXISTS dementia_index_mixed;
 
@@ -234,6 +228,7 @@ SELECT
   e.patid,
   e.eventdate,
   CASE
+    WHEN m.contains_alcohol = 1 THEN 'Alcohol'
     WHEN m.patid IS NOT NULL THEN 'Mixed'
     ELSE e.subtype
   END AS subtype,

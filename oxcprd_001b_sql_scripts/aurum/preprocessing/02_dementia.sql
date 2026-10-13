@@ -1,4 +1,6 @@
--- 02. Build a compact dementia event table
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 --
 -- Mild cognitive impairment codes are excluded at source.
 --

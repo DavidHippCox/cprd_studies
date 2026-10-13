@@ -1,7 +1,6 @@
--- Required event/patient tables:
---   alcohol_observation
---   aurum_oxcprd_001b.alcohol_unit_aurum
---   aurum_oxcprd_001b.alcohol_unit_numunitid_aurum
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 --
 -- Assumptions:
 --   * Medcodeid present in alcohol_unit_aurum iff alc_category = 'check_upd'!

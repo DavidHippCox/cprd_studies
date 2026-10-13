@@ -1,21 +1,8 @@
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 -- BMI before dementia index for CPRD Aurum.
 --
--- Depends on:
---   observation
---   v0_bmi_codes_AURUM
---   v0_height_codes_AURUM
---   v0_weight_codes_AURUM
---   v0_bmi_numunitid_aurum
---   v0_height_numunitid_aurum
---   v0_weight_numunitid_aurum
---   preproc_patient_alcohol_dementia, including yob_date
---
--- Performance design:
---   * Read observation once for BMI, height, and weight combined.
---   * Start from the dementia cohort and use observation(patid, obsdate).
---   * Carry yob_date in the dementia cohort, avoiding repeated joins to
---     preproc_patient_candidates.
---   * Keep intermediate tables narrow and session-scoped.
 USE aurum_oxcprd_001b;
 
 /* ----------------------------------------------------------------------
@@ -98,7 +85,7 @@ FROM
         END AS DECIMAL(18, 6)
       ) AS measurement_value
     FROM
-      preproc_patient_alcohol_dementia AS p
+      analysis_pop AS p
       INNER JOIN observation AS o ON o.patid = p.patid
       AND o.obsdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
       AND o.obsdate <= p.dementia_index_date
@@ -233,7 +220,7 @@ SELECT
   ROUND(c.recent_weight_kg, 3) AS bmi_weight_kg_recent,
   ROUND(c.recent_bmi, 3) AS bmi_recorded_recent
 FROM
-  preproc_patient_alcohol_dementia AS p
+  analysis_pop AS p
   LEFT JOIN (
     SELECT
       m.patid,
