@@ -1,23 +1,14 @@
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 -- 02c. Append HES AUD events to classified CPRD alcohol observations
 --
--- CPRD alcohol observations have already been classified in:
---   aurum_oxcprd_001b.alcohol_observation_category_classified
 --
 -- HES AUD events:
--- We are only using 'aud' codes from hes i.e not F10.0 (accute intoxification)
+-- We are only using 'aud' codes from hes i.e not F10.0 (accute intoxication)
 -- future work should consider potential exclusion of patients if highest
 -- alcohol recording before indexdate (dementia incidence) 
 -- is lower than heavy-drinker status 
---
--- Only columns required downstream are retained. CPRD-specific measurement
--- fields (obstypeid, value, numunitid, weekly-unit bounds, gender) are not
--- carried forward because classification has already been completed.
---
--- HES events are AUD by construction and therefore receive:
---   alc_category = 'aud'
---   alc_category_2 = 'aud'
---   status = 'ACCEPT'
---   reject reason = NULL
 --
 USE aurum_oxcprd_001b;
 
@@ -28,7 +19,7 @@ DROP TABLE IF EXISTS aurum_oxcprd_001b.preproc_alcohol_events;
 
 CREATE TABLE aurum_oxcprd_001b.preproc_alcohol_events ENGINE = InnoDB AS
 WITH
-  alcohol_icd10_codes AS (
+  aud_codes_icd10 AS (
     SELECT
       icd10,
       `description` AS term,
@@ -56,10 +47,7 @@ WITH
       c.strict_phenotype,
       c.alc_category,
       c.alc_category_status,
-      c.alc_category_reject_reason,
-      c.alc_category_2,
-      c.alc_category_2_status,
-      c.alc_category_2_reject_reason
+      c.alc_category_reject_reason
     FROM
       aurum_oxcprd_001b.alcohol_observation_category_classified AS c
     UNION ALL
@@ -77,13 +65,10 @@ WITH
       il.strict_phenotype,
       'aud' AS alc_category,
       'ACCEPT' AS alc_category_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason,
-      'aud' AS alc_category_2,
-      'ACCEPT' AS alc_category_2_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
+      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason
     FROM
       alcohol_hes_diagnosis_epi AS h
-      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd
+      INNER JOIN aud_codes_icd10 AS il ON il.icd10 = h.icd
     UNION ALL
     /* ---------------------------------------------------------------------
     HES APC: hospital diagnoses
@@ -99,13 +84,10 @@ WITH
       il.strict_phenotype,
       'aud' AS alc_category,
       'ACCEPT' AS alc_category_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason,
-      'aud' AS alc_category_2,
-      'ACCEPT' AS alc_category_2_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
+      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason
     FROM
       alcohol_hes_diagnosis_hosp AS h
-      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd
+      INNER JOIN aud_codes_icd10 AS il ON il.icd10 = h.icd
     UNION ALL
     /* ---------------------------------------------------------------------
     HES APC: primary hospital diagnosis
@@ -121,13 +103,10 @@ WITH
       il.strict_phenotype,
       'aud' AS alc_category,
       'ACCEPT' AS alc_category_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason,
-      'aud' AS alc_category_2,
-      'ACCEPT' AS alc_category_2_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
+      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason
     FROM
       alcohol_hes_primary_diag_hosp AS h
-      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd_primary
+      INNER JOIN aud_codes_icd10 AS il ON il.icd10 = h.icd_primary
     UNION ALL
     /* ---------------------------------------------------------------------
     HES outpatient
@@ -143,13 +122,10 @@ WITH
       il.strict_phenotype,
       'aud' AS alc_category,
       'ACCEPT' AS alc_category_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason,
-      'aud' AS alc_category_2,
-      'ACCEPT' AS alc_category_2_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_2_reject_reason
+      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason
     FROM
       alcohol_hesop_clinical_apptdate AS h
-      INNER JOIN alcohol_icd10_codes AS il ON il.icd10 = h.icd
+      INNER JOIN aud_codes_icd10 AS il ON il.icd10 = h.icd
   )
 SELECT
   e.source_table,
@@ -162,25 +138,16 @@ SELECT
   e.strict_phenotype,
   e.alc_category,
   e.alc_category_status,
-  e.alc_category_reject_reason,
-  e.alc_category_2,
-  e.alc_category_2_status,
-  e.alc_category_2_reject_reason
+  e.alc_category_reject_reason
 FROM
   alcohol_events AS e
   INNER JOIN preproc_patient_candidates AS p ON p.patid = e.patid
 WHERE
   e.eventdate IS NOT NULL
   AND p.yob_date IS NOT NULL
-  AND e.eventdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR) -- remove weird obervations that occur in 1899. 
-  AND (
-    p.regenddate IS NULL
-    OR e.eventdate <= p.regenddate -- should this be regenddate or study end, e.g earliest_4 (we do that later on but we want to get rid of the obviously bad observations first?)
-  )
-  AND (
-    p.merged_death IS NULL
-    OR e.eventdate <= p.merged_death -- like above should this be earliest_4 (we do that later on but we want to get rid of the obviously bad observations first?)
-  );
+  AND e.eventdate >= DATE_ADD(p.yob_date, INTERVAL 18 YEAR) -- remove weird obervations that occur in 1899 & only adult observations. 
+  -- only observations up to earliest of {death, lcd, study end, regenddate}
+  AND e.eventdate <= earliest_4;
 
 ALTER TABLE aurum_oxcprd_001b.preproc_alcohol_events
 ORDER BY
@@ -192,8 +159,7 @@ ADD INDEX idx_alcohol_events_patid_eventdate (patid, eventdate),
 ADD INDEX idx_alcohol_events_source (source_dataset, source_table),
 ADD INDEX idx_alcohol_events_medcodeid (medcodeid),
 ADD INDEX idx_alcohol_events_icd10 (icd10),
-ADD INDEX idx_alcohol_events_category (alc_category),
-ADD INDEX idx_alcohol_events_category_2 (alc_category_2);
+ADD INDEX idx_alcohol_events_category (alc_category);
 
 /* -------------------------------------------------------------------------
 2. QC summary
@@ -206,8 +172,6 @@ SELECT
   source_table,
   alc_category,
   alc_category_status,
-  alc_category_2,
-  alc_category_2_status,
   COUNT(*) AS n_rows,
   COUNT(DISTINCT patid) AS n_patients
 FROM
@@ -216,6 +180,4 @@ GROUP BY
   source_dataset,
   source_table,
   alc_category,
-  alc_category_status,
-  alc_category_2,
-  alc_category_2_status;
+  alc_category_status;

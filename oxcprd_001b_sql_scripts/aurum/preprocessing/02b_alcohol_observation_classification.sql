@@ -1,10 +1,6 @@
--- 03. Alcohol observation-level classification
---
--- Depends on objects created in 02_alcohol.sql:
---   aurum_oxcprd_001b.alcohol_units_observation_classified
---   alcohol_phenotype_observation
---   preproc_patient_candidates
---
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 -- Data flow:
 --   * alcohol_units_observation_classified contains the unit-based
 --     observations from codelist codes originally labelled 'check_upd'.
@@ -18,15 +14,15 @@
 --   gender = 2: > 35 units/week
 --
 -- For ranged unit observations, a category is assigned only when the whole
--- range falls within that category. Ranges crossing alc_category_2
+-- range falls within that category. Ranges crossing alc_category
 -- boundaries at 0, 7, 14 or the gender-specific AUD threshold are retained
--- with NULL alc_category_2 and status REVIEW. Specific crossed boundaries
--- are recorded in alc_category_2_reject_reason.
+-- with NULL alc_category and status REVIEW. Specific crossed boundaries
+-- are recorded in alc_category_reject_reason.
 --
 -- Extreme values:
 --   reject when either weekly_units_low or weekly_units_high is > 300.
 --
--- alc_category_2 splits the six light-drinker medcodeids:
+-- alc_category splits the six light-drinker medcodeids:
 --   Intrinsic trivial-drinker:
 --     250321015, 397729013, 855071000006115, 4533271000006119
 --
@@ -39,7 +35,7 @@
 --
 --   250322010: Ex-light drinker - (1-2u/day)
 --     Investigation found no suitable numunitids for this code.
---     ALL occurrences are therefore invalid for alc_category_2.
+--     ALL occurrences are therefore invalid for alc_category.
 USE aurum_oxcprd_001b;
 
 /* -------------------------------------------------------------------------
@@ -82,11 +78,6 @@ WITH
         OR u.weekly_units_high > 300 THEN 'EXTREME_WEEKLY_UNITS_GT_300'
         ELSE NULL
       END AS data_reject_reason,
-      CASE
-        WHEN u.weekly_units_low <= u.aud_threshold
-        AND u.weekly_units_high > u.aud_threshold THEN 'RANGE_CROSSES_AUD_THRESHOLD'
-        ELSE NULL
-      END AS alc_category_review_reason,
       NULLIF(
         CONCAT_WS(
           ';',
@@ -108,7 +99,7 @@ WITH
           END
         ),
         ''
-      ) AS alc_category_2_review_reason
+      ) AS alc_category_review_reason
     FROM
       unit_base AS u
   ),
@@ -126,26 +117,10 @@ WITH
       u.gender,
       u.weekly_units_low,
       u.weekly_units_high,
-      /* alc_category: original weekly-unit classification. */
+      /* alc_category */
       CASE
         WHEN u.data_reject_reason IS NOT NULL
         OR u.alc_category_review_reason IS NOT NULL THEN NULL
-        WHEN u.weekly_units_low = 0
-        AND u.weekly_units_high = 0 THEN 'non-drinker'
-        WHEN u.weekly_units_low > u.aud_threshold THEN 'aud'
-        WHEN u.weekly_units_high <= 14 THEN 'light-drinker'
-        ELSE 'heavy-drinker'
-      END AS alc_category,
-      CASE
-        WHEN u.data_reject_reason IS NOT NULL THEN 'REJECT'
-        WHEN u.alc_category_review_reason IS NOT NULL THEN 'REVIEW'
-        ELSE 'ACCEPT'
-      END AS alc_category_status,
-      COALESCE(u.data_reject_reason, u.alc_category_review_reason) AS alc_category_reject_reason,
-      /* alc_category_2: finer low-consumption categories. */
-      CASE
-        WHEN u.data_reject_reason IS NOT NULL
-        OR u.alc_category_2_review_reason IS NOT NULL THEN NULL
         WHEN u.weekly_units_low = 0
         AND u.weekly_units_high = 0 THEN 'non-drinker'
         WHEN u.weekly_units_low > u.aud_threshold THEN 'aud'
@@ -154,13 +129,13 @@ WITH
         WHEN u.weekly_units_low > 7
         AND u.weekly_units_high <= 14 THEN 'light-moderate'
         ELSE 'heavy-drinker'
-      END AS alc_category_2,
+      END AS alc_category,
       CASE
         WHEN u.data_reject_reason IS NOT NULL THEN 'REJECT'
-        WHEN u.alc_category_2_review_reason IS NOT NULL THEN 'REVIEW'
+        WHEN u.alc_category_review_reason IS NOT NULL THEN 'REVIEW'
         ELSE 'ACCEPT'
-      END AS alc_category_2_status,
-      COALESCE(u.data_reject_reason, u.alc_category_2_review_reason) AS alc_category_2_reject_reason
+      END AS alc_category_status,
+      COALESCE(u.data_reject_reason, u.alc_category_review_reason) AS alc_category_reject_reason
     FROM
       unit_rules AS u
   ),
@@ -178,9 +153,6 @@ WITH
       p.gender,
       CAST(NULL AS DECIMAL(18, 6)) AS weekly_units_low,
       CAST(NULL AS DECIMAL(18, 6)) AS weekly_units_high,
-      o.alc_category,
-      'ACCEPT' AS alc_category_status,
-      CAST(NULL AS CHAR(255)) AS alc_category_reject_reason,
       /* Only light-drinker codes need further classification. */
       CASE
         WHEN o.alc_category <> 'light-drinker' THEN o.alc_category
@@ -195,7 +167,7 @@ WITH
         AND o.`value` > 1
         AND o.`value` <= 2 THEN 'light-moderate'
         ELSE NULL
-      END AS alc_category_2,
+      END AS alc_category,
       CASE
         WHEN o.alc_category <> 'light-drinker' THEN 'ACCEPT'
         WHEN o.medcodeid = 250322010 THEN 'REJECT'
@@ -205,7 +177,7 @@ WITH
         AND o.`value` > 0
         AND o.`value` <= 2 THEN 'ACCEPT'
         ELSE 'REJECT'
-      END AS alc_category_2_status,
+      END AS alc_category_status,
       CASE
         WHEN o.alc_category <> 'light-drinker' THEN NULL
         WHEN o.medcodeid = 250322010 THEN 'NO_SUITABLE_NUMUNITID_FOR_MEDCODE_250322010'
@@ -226,7 +198,7 @@ WITH
         AND o.`value` > 0
         AND o.`value` <= 2 THEN NULL
         ELSE 'UNEXPECTED_LIGHT_DRINKER_MEDCODE'
-      END AS alc_category_2_reject_reason
+      END AS alc_category_reject_reason
     FROM
       alcohol_phenotype_observation AS o
       INNER JOIN preproc_patient_candidates AS p ON p.patid = o.patid
@@ -246,10 +218,7 @@ SELECT
   weekly_units_high,
   alc_category,
   alc_category_status,
-  alc_category_reject_reason,
-  alc_category_2,
-  alc_category_2_status,
-  alc_category_2_reject_reason
+  alc_category_reject_reason
 FROM
   unit_classified
 UNION ALL
@@ -268,18 +237,14 @@ SELECT
   weekly_units_high,
   alc_category,
   alc_category_status,
-  alc_category_reject_reason,
-  alc_category_2,
-  alc_category_2_status,
-  alc_category_2_reject_reason
+  alc_category_reject_reason
 FROM
   phenotype_classified;
 
 ALTER TABLE aurum_oxcprd_001b.alcohol_observation_category_classified
 ADD INDEX idx_alc_obs_patid_eventdate (patid, eventdate),
 ADD INDEX idx_alc_obs_medcodeid (medcodeid),
-ADD INDEX idx_alc_obs_category (alc_category),
-ADD INDEX idx_alc_obs_category_2 (alc_category_2);
+ADD INDEX idx_alc_obs_category (alc_category);
 
 /* -------------------------------------------------------------------------
 2. QC summaries
@@ -292,9 +257,6 @@ SELECT
   alc_category,
   alc_category_status,
   alc_category_reject_reason,
-  alc_category_2,
-  alc_category_2_status,
-  alc_category_2_reject_reason,
   COUNT(*) AS n_rows,
   COUNT(DISTINCT patid) AS n_patients
 FROM
@@ -303,16 +265,13 @@ GROUP BY
   source_table,
   alc_category,
   alc_category_status,
-  alc_category_reject_reason,
-  alc_category_2,
-  alc_category_2_status,
-  alc_category_2_reject_reason;
+  alc_category_reject_reason;
 
 /* -------------------------------------------------------------------------
 3. QC for the two value/numunitid-dependent light-drinker codes
 
 250322010 is retained here to document the observed numunitids even though
-all occurrences are invalid for alc_category_2.
+all occurrences are invalid for alc_category.
 ------------------------------------------------------------------------- */
 DROP TABLE IF EXISTS aurum_oxcprd_001b.v_qc_alcohol_light_split_codes;
 
@@ -320,9 +279,9 @@ CREATE TABLE aurum_oxcprd_001b.v_qc_alcohol_light_split_codes AS
 SELECT
   medcodeid,
   numunitid,
-  alc_category_2,
-  alc_category_2_status,
-  alc_category_2_reject_reason,
+  alc_category,
+  alc_category_status,
+  alc_category_reject_reason,
   COUNT(*) AS n_rows,
   COUNT(DISTINCT patid) AS n_patients,
   MIN(`value`) AS min_value,
@@ -334,11 +293,12 @@ WHERE
 GROUP BY
   medcodeid,
   numunitid,
-  alc_category_2,
-  alc_category_2_status,
-  alc_category_2_reject_reason;
+  alc_category,
+  alc_category_status,
+  alc_category_reject_reason;
 
 /*
+Historical QC results run on preproc_patient_candidates (not rerun for this edit).
 select alc_category, count(distinct(patid)) as count_distinct_patid from alcohol_observation_category_classified group by alc_category;
 +------------------+----------------------+
 | alc_category     | count_distinct_patid |
