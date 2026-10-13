@@ -96,7 +96,7 @@ DROP TABLE IF EXISTS aurum_oxcprd_001b.candidate_patids
 CREATE TABLE aurum_oxcprd_001b.candidate_patids AS
 SELECT
   d.patid,
-  d.eventdate AS dementia_eventdate,
+  d.eventdate AS dementia_mci_eventdate,
   a.eventdate AS alcohol_eventdate
 FROM
   aurum_oxcprd_001b.dementia_patids AS d

@@ -1,6 +1,7 @@
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- this was used to create table 1 v1
 -- run ons_death_dedip.r before this
--- patient_candidates_mariadb_pipeline_v3.sql
---
 --
 USE aurum_oxcprd_001b;
 
@@ -58,24 +59,8 @@ SELECT
   le.lsoa_e,
   er.ethnic_6,
   pracid_imd.e2015_imd_10,
-  pracid_imd.ni2017_imd_10,
-  pracid_imd.s2016_imd_10,
-  pracid_imd.w2014_imd_10,
   patid_imd.e2019_imd_20 AS patid_imd,
-  le.linkyear,
-  CASE
-    WHEN CAST(pr.region AS UNSIGNED) BETWEEN 1 AND 9  THEN 'England'
-    WHEN CAST(pr.region AS UNSIGNED) = 10 THEN 'Wales'
-    WHEN CAST(pr.region AS UNSIGNED) = 11 THEN 'Scotland'
-    WHEN CAST(pr.region AS UNSIGNED) = 12 THEN 'Northern Ireland'
-    ELSE NULL
-  END AS country,
-  COALESCE(
-    pracid_imd.e2015_imd_10,
-    pracid_imd.ni2017_imd_10,
-    pracid_imd.s2016_imd_10,
-    pracid_imd.w2014_imd_10
-  ) AS uk_imd -- as per NF suggestion (I believe documentation suggests not to do this but they are correlated?)
+  le.linkyear
 FROM
   v_patient_base_eligible AS p
   LEFT JOIN practice AS pr ON pr.pracid = p.pracid
@@ -83,8 +68,11 @@ FROM
   LEFT JOIN ethnicity_record AS er ON er.patid = p.patid
   LEFT JOIN practice_imd AS pracid_imd ON pracid_imd.pracid = p.pracid
   LEFT JOIN patient_2019_imd AS patid_imd ON patid_imd.patid = p.patid
-  LEFT JOIN death_patient_deduplicated AS od ON od.patid = p.patid;
+  LEFT JOIN death_patient_deduplicated AS od ON od.patid = p.patid
+WHERE
+  CAST(pr.region AS UNSIGNED) BETWEEN 1 AND 9;
 
+-- only want english practices
 CREATE TABLE v_patient_earliest_4_latest_2 AS
 SELECT
   p.patid,
@@ -102,15 +90,10 @@ SELECT
   p.lsoa_e,
   p.ethnic_6,
   p.e2015_imd_10,
-  p.ni2017_imd_10,
-  p.s2016_imd_10,
-  p.w2014_imd_10,
   p.patid_imd,
   p.linkyear,
-  p.country,
-  p.uk_imd,
-  DATE '1998-01-02' AS ons_link_start, -- should this hes-start (hes for dementia outcomes/incidence)?
-  DATE '2025-05-30' AS ons_link_end, -- should this hes-end (hes for dementia outcomes/incidence)?
+  DATE '1998-01-02' AS ons_link_start, -- ons linkage start - study beginning 
+  DATE '2025-05-30' AS ons_link_end,
   LEAST(
     COALESCE(p.lcd, DATE '9999-12-31'),
     COALESCE(p.regenddate, DATE '9999-12-31'),
@@ -130,13 +113,13 @@ CREATE INDEX idx_patid ON v_patient_earliest_4_latest_2 (patid);
 CREATE TABLE v_candidate_first_diagnosis AS
 SELECT
   d.patid,
-  MIN(d.dementia_eventdate) AS first_diag
+  MIN(d.dementia_mci_eventdate) AS first_diag_mci_dementia
 FROM
   candidate_patids AS d -- mci included as dementia code
   INNER JOIN v_patient_earliest_4_latest_2 AS p ON p.patid = d.patid
 WHERE
   -- dementia_event after 18 years old (remove observations that occur during the year 1899/1860)
-  d.dementia_eventdate > DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
+  d.dementia_mci_eventdate > DATE_ADD(p.yob_date, INTERVAL 18 YEAR)
 GROUP BY
   d.patid;
 
@@ -159,25 +142,20 @@ SELECT
   p.lsoa_e,
   p.ethnic_6,
   p.e2015_imd_10,
-  p.ni2017_imd_10,
-  p.s2016_imd_10,
-  p.w2014_imd_10,
   p.patid_imd,
   p.linkyear,
-  p.country,
-  p.uk_imd,
   p.ons_link_start,
   p.ons_link_end,
   p.earliest_4,
   p.latest_2,
-  d.first_diag,
-  YEAR(d.first_diag) - YEAR(p.yob_date) AS age_at_first_diag
+  d.first_diag_mci_dementia,
+  YEAR(d.first_diag_mci_dementia) - YEAR(p.yob_date) AS age_at_first_diag_mci_dementia
 FROM
   v_patient_earliest_4_latest_2 AS p
   INNER JOIN v_candidate_first_diagnosis AS d ON d.patid = p.patid
 WHERE
-  d.first_diag >= DATE_ADD(p.yob_date, INTERVAL 40 YEAR)
-  AND d.first_diag <= DATE_ADD(p.yob_date, INTERVAL 100 YEAR)
+  d.first_diag_mci_dementia >= DATE_ADD(p.yob_date, INTERVAL 40 YEAR)
+  AND d.first_diag_mci_dementia <= DATE_ADD(p.yob_date, INTERVAL 100 YEAR)
   -- remove patients with first dementia/mci diagnosis before the age of 40 and after 100
   AND (
     p.merged_death IS NULL
