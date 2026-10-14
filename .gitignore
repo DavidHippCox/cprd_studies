@@ -1,2 +1,5 @@
 data/
 create_user/
+
+# Machine-specific paths, rendered scripts and private history backups.
+/local/
