@@ -115,7 +115,9 @@ CREATE TABLE IF NOT EXISTS extract_log (
    3. Core extractor
    ------------------------------------------------------------------------- */
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 
 CREATE OR REPLACE PROCEDURE extract_to_table_core (
     IN p_extract_kind VARCHAR(10),
@@ -691,8 +693,10 @@ BEGIN
         p_exclude_pracids
     );
 END$$
-
+/* sql-formatter-disable */
 DELIMITER ;
+/* sql-formatter-enable */
+
 
 
 /* -------------------------------------------------------------------------

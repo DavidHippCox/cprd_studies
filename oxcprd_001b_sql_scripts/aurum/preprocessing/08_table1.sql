@@ -4,7 +4,9 @@
 -- Clinical AUD remains pending extraction.
 USE aurum_oxcprd_001b;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE OR REPLACE PROCEDURE build_table1()
 MODIFIES SQL DATA
 BEGIN
@@ -267,7 +269,9 @@ BEGIN
     tmp_table1_scalar_stats, tmp_table1_membership,
     tmp_table1_variables, tmp_table1_groups;
 END$$
+/* sql-formatter-disable */
 DELIMITER ;
+/* sql-formatter-enable */
 
 CALL build_table1();
 

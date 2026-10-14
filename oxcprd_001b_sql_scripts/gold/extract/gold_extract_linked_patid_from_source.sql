@@ -1,5 +1,7 @@
 -- done in source database gold
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE extract_table (IN p_source_table VARCHAR(64))
 BEGIN DECLARE v_target_table VARCHAR(128);
 
@@ -15,8 +17,9 @@ CALL extract_by_patid_to_table (
   TRUE
 );
 
-END $$ DELIMITER;
-
+END /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 CALL extract_table ('hes_diagnosis_epi');
 
 CALL extract_table ('hes_diagnosis_hosp');

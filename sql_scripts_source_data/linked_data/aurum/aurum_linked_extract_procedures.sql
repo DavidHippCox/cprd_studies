@@ -98,7 +98,9 @@ CREATE TABLE IF NOT EXISTS linked_extract_log (
 /* -------------------------------------------------------------------------
 3. Core extractor
 ------------------------------------------------------------------------- */
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 DROP PROCEDURE IF EXISTS extract_linked_to_table_core$$
 CREATE PROCEDURE extract_linked_to_table_core (
   IN p_extract_kind VARCHAR(10),
@@ -754,8 +756,9 @@ CALL extract_linked_by_patid_to_table (
   TRUE
 );
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 /* -------------------------------------------------------------------------
 5. Examples
 -------------------------------------------------------------------------

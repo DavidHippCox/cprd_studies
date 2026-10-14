@@ -97,10 +97,6 @@ ADD COLUMN alcohol_detoxification VARCHAR(255);
 ALTER TABLE v0_dementia_drug_AURUM
 ADD COLUMN drugtypes VARCHAR(255);
 
-ALTER TABLE v0_medication_codes_AURUM
-ADD COLUMN drugtypes VARCHAR(255),
-ADD COLUMN alcohol_detoxification VARCHAR(255);
-
 CREATE TABLE IF NOT EXISTS icd10_template (icd10 VARCHAR(255), description VARCHAR(255), PRIMARY KEY (icd10)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE alcohol_codes_icd10 LIKE icd10_template;
@@ -116,7 +112,9 @@ ADD COLUMN subtype VARCHAR(255),
 ADD COLUMN aud VARCHAR(255),
 ADD COLUMN strict_phenotype VARCHAR(255);
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE LOAD_FILE(IN p_file VARCHAR(255), IN p_table VARCHAR(255))
 BEGIN
 SET
@@ -139,8 +137,9 @@ EXECUTE stmt;
 
 DEALLOCATE PREPARE stmt;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 SET
   @root = '{{CODELISTS_ROOT}}/codelist_tools/';
 

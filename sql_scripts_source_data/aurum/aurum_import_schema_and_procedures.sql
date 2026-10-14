@@ -135,7 +135,9 @@ DROP PROCEDURE IF EXISTS load_aurum_file_raw;
 DROP PROCEDURE IF EXISTS load_aurum_range_raw;
 DROP PROCEDURE IF EXISTS aurum_import_summary;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 
 CREATE PROCEDURE load_aurum_file_raw(
   IN p_target_table VARCHAR(64),
@@ -307,7 +309,9 @@ BEGIN
    ORDER BY target_table;
 END$$
 
+/* sql-formatter-disable */
 DELIMITER ;
+/* sql-formatter-enable */
 
 -- ============================================================
 

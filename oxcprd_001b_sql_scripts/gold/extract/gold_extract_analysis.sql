@@ -35,7 +35,9 @@ CREATE TABLE IF NOT EXISTS extract_log (
   INDEX idx_extract_log_output (output_table)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 /* -------------------------------------------------------------------------
 1. Extract any source table by patid
 
@@ -905,8 +907,9 @@ SELECT
   p_output_table AS output_table,
   v_rows AS rows_created;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 /* -------------------------------------------------------------------------
 Examples
 -------------------------------------------------------------------------

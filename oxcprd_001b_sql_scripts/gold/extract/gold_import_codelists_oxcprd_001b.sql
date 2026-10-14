@@ -83,7 +83,9 @@ ADD COLUMN subtype VARCHAR(255),
 ADD COLUMN aud VARCHAR(255),
 ADD COLUMN strict_phenotype VARCHAR(255);
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE LOAD_FILE(IN p_file VARCHAR(255), IN p_table VARCHAR(255))
 BEGIN
 SET
@@ -106,8 +108,9 @@ EXECUTE stmt;
 
 DEALLOCATE PREPARE stmt;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 SET
   @root = '{{CODELISTS_ROOT}}/codelist_tools/';
 

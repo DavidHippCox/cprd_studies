@@ -261,7 +261,9 @@ CREATE TABLE IF NOT EXISTS therapy_003 LIKE tpl_therapy_raw;
 -- DROP PROCEDURE IF EXISTS load_gold_range_raw;
 -- DROP PROCEDURE IF EXISTS gold_import_summary;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 
 CREATE PROCEDURE load_gold_file_raw(
   IN p_target_table VARCHAR(64),
@@ -448,7 +450,9 @@ BEGIN
    ORDER BY target_table;
 END$$
 
+/* sql-formatter-disable */
 DELIMITER ;
+/* sql-formatter-enable */
 
 -- ============================================================
 

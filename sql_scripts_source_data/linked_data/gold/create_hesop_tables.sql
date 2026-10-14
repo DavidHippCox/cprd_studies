@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS hesop_patient_pathway (
   subdate DATE
 ) ENGINE = InnoDB CHARSET = utf8mb4;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE load_hesop_patient_pathway_files ()
 BEGIN DECLARE file_number INT DEFAULT 1;
 
@@ -65,8 +67,9 @@ SET
 
 END WHILE;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 --  hesop_appointment:
 DROP TABLE IF EXISTS hesop_appointment;
 
@@ -91,7 +94,9 @@ CREATE TABLE IF NOT EXISTS hesop_appointment (
   waiting SMALLINT
 ) ENGINE = InnoDB CHARSET = utf8mb4;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE load_hesop_appointment_files ()
 BEGIN DECLARE file_number INT DEFAULT 1;
 
@@ -168,8 +173,9 @@ SET
 
 END WHILE;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 --  hesop_clinical:
 DROP TABLE IF EXISTS hesop_clinical;
 
@@ -184,7 +190,9 @@ CREATE TABLE IF NOT EXISTS hesop_clinical (
   mainspef VARCHAR(16)
 ) ENGINE = InnoDB CHARSET = utf8mb4;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE load_hesop_clinical_files ()
 BEGIN DECLARE file_number INT DEFAULT 1;
 
@@ -240,8 +248,9 @@ SET
 
 END WHILE;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 -- create hesop_clinical_apptdate by copying hesop_clinical
 CREATE TABLE hesop_clinical_apptdate AS
 SELECT
@@ -275,7 +284,9 @@ CREATE TABLE IF NOT EXISTS hesop_operation (
   mainspef VARCHAR(16)
 ) ENGINE = InnoDB CHARSET = utf8mb4;
 
+/* sql-formatter-disable */
 DELIMITER $$
+/* sql-formatter-enable */
 CREATE PROCEDURE load_hesop_operation_files ()
 BEGIN DECLARE file_number INT DEFAULT 1;
 
@@ -349,6 +360,7 @@ SET
 
 END WHILE;
 
-END $$ DELIMITER;
-
+END $$ /* sql-formatter-disable */
+DELIMITER ;
+/* sql-formatter-enable */
 CALL load_hesop_operation_files ();
