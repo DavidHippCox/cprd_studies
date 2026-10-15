@@ -1,69 +1,60 @@
-# Code status:
+# Source data management
 
-* [![Appveyor CI status](https://ci.appveyor.com/api/projects/status/4u6pexmtpuf8jq66?svg=true)](https://ci.appveyor.com/project/rasmushoj/server) ci.appveyor.com
+## Summary
 
-## MariaDB: The innovative open source database
+Import & export (and indexing) scripts in mariadb database
 
-MariaDB was designed as a drop-in replacement for MySQL(R) with more 
-features, new storage engines, fewer bugs, and better performance.
+## Order to Run Scripts
 
-MariaDB is brought to you by the MariaDB Foundation and the MariaDB Corporation.
-Please read the CREDITS file for details about the MariaDB Foundation,
-and who is developing MariaDB.
+Run the scripts in the following order:
 
-MariaDB is developed by many of the original developers of MySQL who
-now work for the MariaDB Corporation, the MariaDB Foundation and by
-many people in the community.
+### Aurum
+1. `sql_scripts_source_data\aurum\aurum_import_schema_and_procedures.sql`
+2. `sql_scripts_source_data\aurum\aurum_import_calls.sql`
+3. `sql_scripts_source_data\aurum\aurum_create_indexes_consultation.sql`
+4. `sql_scripts_source_data\aurum\aurum_create_indexes_drugissue.sql`
+5. `sql_scripts_source_data\aurum\aurum_create_indexes_observation.sql`
+6. `sql_scripts_source_data\aurum\aurum_create_indexes_other_tables.sql`
+7. `sql_scripts_source_data\aurum\aurum_extract_procedures.sql`
+8. `sql_scripts_source_data\aurum\aurum_vison_to_emis_migrators.sql`
 
-MySQL, which is the base of MariaDB, is a product and trademark of Oracle
-Corporation, Inc. For a list of developers and other contributors,
-see the Credits appendix.  You can also run 'SHOW authors' to get a
-list of active contributors.
 
-A description of the MariaDB project and a manual can be found at:
+#### Quality control
+1. `sql_scripts_source_data\aurum\drugissue_patids.sql`
+2. `sql_scripts_source_data\aurum\observation_patids.sql`
+3. `sql_scripts_source_data\aurum\aurum_create_own_medical_table.sql`
 
-https://mariadb.org
 
-https://mariadb.com/kb/en/
+### Gold
 
-https://mariadb.com/kb/en/mariadb-vs-mysql-features/
 
-https://mariadb.com/kb/en/mariadb-versus-mysql-compatibility/
+1. `sql_scripts_source_data\gold\gold_import_schema_and_procedures.sql`
+2. `sql_scripts_source_data\gold\gold_call_tables.sql`
+3. `sql_scripts_source_data\gold\gold_create_indexes_clinical_test_referral.sql`
+4. `sql_scripts_source_data\gold\gold_create_indexes_therapy.sql`
+5. `sql_scripts_source_data\gold\gold_create_indexes_consultation.sql`
+6. `sql_scripts_source_data\gold\gold_create_indexes_other_tables.sql`
+7. `sql_scripts_source_data\gold\gold_extract_procedures.sql`
 
-https://mariadb.com/kb/en/new-and-old-releases/
 
-# Getting the code, building it and testing it
+### Linked data
 
-Refer to the following guide: https://mariadb.org/get-involved/getting-started-for-developers/get-code-build-test/
-which outlines how to build the source code correctly and run the MariaDB testing framework,
-as well as which branch to target for your contributions.
+#### Aurum
+1. `sql_scripts_source_data\linked_data\aurum\aurum_create_hesae_tables.sql`
+2. `sql_scripts_source_data\linked_data\aurum\aurum_create_hesapc_tables.sql`
+3. `sql_scripts_source_data\linked_data\aurum\aurum_create_hesop_tables.sql`
+4. `sql_scripts_source_data\linked_data\aurum\aurum_linkage_coverage.sql`
+5. `sql_scripts_source_data\linked_data\aurum\aurum_other_linked_tables.sql`
+6. `sql_scripts_source_data\linked_data\aurum\aurum_create_indexes_icd10_date.sql`
+7. `sql_scripts_source_data\linked_data\aurum\aurum_create_indexes_patid.sql`
+8. `sql_scripts_source_data\linked_data\aurum\aurum_linked_extract_procedures.sql`
 
-# Help
-
-More help is available from the Maria Discuss mailing list
-https://lists.mariadb.org/postorius/lists/discuss.lists.mariadb.org/ and MariaDB's Zulip
-instance, https://mariadb.zulipchat.com/
-
-# Licensing
-
-***************************************************************************
-
-MariaDB is specifically available only under version 2 of the GNU
-General Public License (GPLv2). (I.e. Without the "any later version"
-clause.) This is inherited from MySQL. Please see the README file in
-the MySQL distribution for more information.
-
-License information can be found in the COPYING file. Third party
-license information can be found in the THIRDPARTY file.
-
-***************************************************************************
-
-# Bug Reports
-
-Bug and/or error reports regarding MariaDB should be submitted at:
-https://jira.mariadb.org
-
-For reporting security vulnerabilities, see our [security-policy](https://mariadb.org/about/security-policy/).
-
-The code for MariaDB, including all revision history, can be found at:
-https://github.com/MariaDB/server
+#### Gold
+1. `sql_scripts_source_data\linked_data\gold\create_hesae_tables.sql`
+2. `sql_scripts_source_data\linked_data\gold\create_hesapc_tables.sql`
+3. `sql_scripts_source_data\linked_data\gold\create_hesop_tables.sql`
+4. `sql_scripts_source_data\linked_data\gold\gold_linkage_coverage.sql`
+5. `sql_scripts_source_data\linked_data\gold\other_linked_tables.sql`
+6. `sql_scripts_source_data\linked_data\gold\create_indexes_icd10_date.sql`
+7. `sql_scripts_source_data\linked_data\gold\create_indexes_patid.sql`
+8. `sql_scripts_source_data\linked_data\gold\linked_extract_procedures.sql`

@@ -23,7 +23,7 @@ $files = @(git -C $repoRoot -c core.quotepath=false ls-files `
     --cached --others --exclude-standard)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot list repository files.' }
 $files = @($files | Where-Object {
-    $_ -match '\.(sql|ps1|r)$' -and $_ -ne 'render_paths.ps1'
+    $_ -match '\.(sql|ps1|r|md)$' -and $_ -ne 'render_paths.ps1'
 })
 $selected = foreach ($item in $Path) {
     $target = if ([IO.Path]::IsPathRooted($item)) { $item }
