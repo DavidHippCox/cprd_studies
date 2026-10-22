@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
 -- project: oxcprd_001b
--- this was used to create table 1 v1
+-- Implements v1 Analysis Plan  
 -- run ons_death_dedip.r before this
 --
 USE aurum_oxcprd_001b;

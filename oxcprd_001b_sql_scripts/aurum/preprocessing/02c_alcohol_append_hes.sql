@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
 -- project: oxcprd_001b
--- this was used to create table 1 v1
+-- Implements v1 Analysis Plan  
 -- 02c. Append HES AUD events to classified CPRD alcohol observations
 --
 --

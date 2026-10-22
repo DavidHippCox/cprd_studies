@@ -1,5 +1,6 @@
 -- Authored by David Hippisley-Cox
 -- project: oxcprd_001b
+-- analysis plan v2: prior history restricts sensitivity analyses only.
 -- this was used to create table 1 v1
 -- 
 -- Defintions:
@@ -12,12 +13,11 @@
 --        pre_dem  : eventdate <= dementia_index_date (includes index day)
 --        post_dem : eventdate > dementia_index_date
 -- 
--- Patients have an eligibile for specific outcome analysis 
--- if their 'pre_dem outcome' is null.  
---
--- Patients have an outcome event if 'pre_dem outcome' is null
--- and their first post_dem outcome is on/before earliest_4.
--- Eligible patients ('pre_dem outcome' is null) but censored on the index date have event=0, time_days=0.
+-- Primary analyses retain patients with prior/index-day events.
+-- sensitivity_eligible=1 means no prior/index-day event for that outcome.
+-- event/time_days describe the first post-index event for all patients.
+-- A prior event alone is not a post-index outcome.
+-- Index-day censoring has event=0 and time_days=0.
 USE aurum_oxcprd_001b;
 
 /* ----------------------------------------------------------------------
@@ -272,9 +272,9 @@ WITH
       pre.term AS first_pre_dem_term,
       post.eventdate AS first_post_dem_eventdate,
       post.term AS first_post_dem_term,
-      -- Eligibility depends on prior history, not follow-up length.
-      -- Index-day censoring remains eligible: event=0, time_days=0.
-      (pre.patid IS NULL) AS eligibility
+      -- Prior history restricts sensitivity analyses only.
+      -- Zero-day follow-up does not alter this history flag.
+      (pre.patid IS NULL) AS sensitivity_eligible
     FROM
       analysis_pop AS p
       CROSS JOIN outcome_prefixes AS x
@@ -296,17 +296,13 @@ SELECT
   r.first_pre_dem_term,
   r.first_post_dem_eventdate,
   r.first_post_dem_term,
-  r.eligibility,
-  -- post_dem records are already strictly after the index date.
-  CASE
-    WHEN r.eligibility = 1 THEN COALESCE(r.first_post_dem_eventdate <= r.earliest_4, 0)
-  END AS event,
-  CASE
-    WHEN r.eligibility = 1 THEN DATEDIFF(
-      LEAST(COALESCE(r.first_post_dem_eventdate, r.earliest_4), r.earliest_4),
-      r.dementia_index_date
-    )
-  END AS time_days
+  r.sensitivity_eligible,
+  -- Primary outcomes include patients with and without prior events.
+  COALESCE(r.first_post_dem_eventdate <= r.earliest_4, 0) AS event,
+  DATEDIFF(
+    LEAST(COALESCE(r.first_post_dem_eventdate, r.earliest_4), r.earliest_4),
+    r.dementia_index_date
+  ) AS time_days
 FROM
   outcome_rows AS r;
 
@@ -330,36 +326,15 @@ SELECT
   SUM(first_post_dem_eventdate IS NOT NULL) AS n_with_post_dem_event,
   -- History before the start of the pre-dementia window
   SUM(first_pre_dem_eventdate < latest_2) AS n_with_history_before_latest_2,
-  -- Eligible patients (no pre/index-day event, including zero-day censoring)
-  SUM(eligibility = 1) AS n_eligible,
-  -- Ineligible patients
-  SUM(eligibility = 0) AS n_ineligible,
-  -- Incident post-dementia events within follow-up
-  SUM(event = 1) AS n_incident_post_dem_events,
-  -- Eligible patients censored without an event
-  SUM(
-    eligibility = 1
-    AND event = 0
-  ) AS n_censored,
-  -- follow-up time among eligible patients
-  AVG (
-    CASE
-      WHEN eligibility = 1 THEN time_days
-      ELSE NULL
-    END
-  ) AS mean_followup_days,
-  MIN(
-    CASE
-      WHEN eligibility = 1 THEN time_days
-      ELSE NULL
-    END
-  ) AS min_followup_days,
-  MAX(
-    CASE
-      WHEN eligibility = 1 THEN time_days
-      ELSE NULL
-    END
-  ) AS max_followup_days
+  SUM(sensitivity_eligible = 1) AS n_sensitivity_eligible,
+  SUM(sensitivity_eligible = 0) AS n_sensitivity_excluded_prior,
+  SUM(event = 1) AS n_post_dem_events,
+  SUM(event = 0) AS n_censored,
+  SUM(sensitivity_eligible = 1 AND event = 1) AS n_sensitivity_events,
+  SUM(sensitivity_eligible = 1 AND event = 0) AS n_sensitivity_censored,
+  AVG(time_days) AS mean_time_days,
+  MIN(time_days) AS min_time_days,
+  MAX(time_days) AS max_time_days
 FROM
   preproc_outcome_features_long
 GROUP BY

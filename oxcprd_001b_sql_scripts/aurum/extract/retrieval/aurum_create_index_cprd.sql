@@ -1,27 +1,19 @@
--- draft
-\W
+-- Authored by David Hippisley-Cox
+-- project: oxcprd_001b
+-- Implements v1 Analysis Plan  
 USE aurum_oxcprd_001b;
 
 -- observation
 /*
 CREATE INDEX idx_patid ON observation
-    (patid); 
+(patid); 
 */
-
-
-CREATE INDEX idx_medcodeid_eventdate ON observation
-    (medcodeid, obsdate); 
-
-
+CREATE INDEX idx_medcodeid_eventdate ON observation (medcodeid, obsdate);
 
 -- drugissue
-CREATE INDEX idx_patid ON drugissue
-    (patid); 
+CREATE INDEX idx_patid ON drugissue (patid);
 
-CREATE INDEX idx_medcodeid_eventdate ON drugissue
-    (prodcodeid, issuedate);
-
-
+CREATE INDEX idx_medcodeid_eventdate ON drugissue (prodcodeid, issuedate);
 
 -- problem
 CREATE INDEX ix_patid ON problem (patid);

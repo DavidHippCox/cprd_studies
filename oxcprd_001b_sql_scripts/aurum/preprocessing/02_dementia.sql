@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
 -- project: oxcprd_001b
--- this was used to create table 1 v1
+-- Implements v1 Analysis Plan  
 --
 -- Mild cognitive impairment codes are excluded at source.
 --
