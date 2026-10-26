@@ -181,6 +181,7 @@ FROM
   INNER JOIN v_candidate_first_diagnosis AS d ON d.patid = p.patid
 WHERE
   TIMESTAMPDIFF (YEAR, MAKEDATE(cb.yob, 1), d.first_diag) > 40
+  AND (TIMESTAMPDIFF (YEAR, MAKEDATE(cb.yob, 1), d.first_diag) < 100)
   AND (
     p.merged_death IS NULL
     OR DATEDIFF(p.merged_death, p.crd) >= 365 -- in practice for at least a 1 year (absolute value needed?)

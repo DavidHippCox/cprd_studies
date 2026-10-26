@@ -27,12 +27,17 @@ CREATE TABLE tmp_dementia_first_dates (patid BIGINT UNSIGNED NOT NULL, eventdate
 INSERT INTO
   tmp_dementia_first_dates (patid, eventdate)
 SELECT
-  patid,
-  MIN(eventdate)
+  de.patid,
+  MIN(de.eventdate) AS eventdate
 FROM
-  preproc_dementia_events
+  preproc_dementia_events AS de
+  INNER JOIN preproc_patient_candidates AS pc ON de.patid = pc.patid
+WHERE
+  -- apply eligbility criteria for dementia incidence (40 is not required but 100 is)
+  de.eventdate >= DATE_ADD(pc.yob_date, INTERVAL 40 YEAR)
+  AND de.eventdate < DATE_ADD(pc.yob_date, INTERVAL 100 YEAR)
 GROUP BY
-  patid;
+  de.patid;
 
 /* -------------------------------------------------------------------------
 2. Assess the first date and retain its eligible records
