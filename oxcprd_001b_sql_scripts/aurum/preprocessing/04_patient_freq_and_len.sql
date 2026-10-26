@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- Implements v1 Analysis Plan  
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 -- 04. GP consultation days and registration length in months.
 --
 -- Consultation count is unchanged: distinct dates in the inclusive

@@ -1,6 +1,8 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- this was used to create table 1 v1
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
+-- analysis plan v2: prior history restricts sensitivity analyses only.
+-- this was used to create table 1 v2
 --
 -- B2 overlaps B1; Total is A+B1.
 -- Clinically coded AUD remains NULL/pending until separately extracted.
@@ -42,7 +44,7 @@ SELECT
   x.outcome_prefix,
   o.first_pre_dem_eventdate,
   o.first_post_dem_eventdate,
-  o.eligibility,
+  o.sensitivity_eligible,
   o.event,
   o.time_days
 FROM
@@ -109,47 +111,47 @@ SELECT
   CAST(NULL AS UNSIGNED) AS clinical_aud,
   oc.first_pre_dem_eventdate AS care_home_pre_dem_eventdate,
   oc.first_post_dem_eventdate AS care_home_post_dem_eventdate,
-  oc.eligibility AS care_home_eligibility,
+  oc.sensitivity_eligible AS care_home_sensitivity_eligible,
   oc.event AS care_home_event,
   oc.time_days AS care_home_time_days,
   op.first_pre_dem_eventdate AS antipsychotics_pre_dem_eventdate,
   op.first_post_dem_eventdate AS antipsychotics_post_dem_eventdate,
-  op.eligibility AS antipsychotics_eligibility,
+  op.sensitivity_eligible AS antipsychotics_sensitivity_eligible,
   op.event AS antipsychotics_event,
   op.time_days AS antipsychotics_time_days,
   od.first_pre_dem_eventdate AS antidepressants_pre_dem_eventdate,
   od.first_post_dem_eventdate AS antidepressants_post_dem_eventdate,
-  od.eligibility AS antidepressants_eligibility,
+  od.sensitivity_eligible AS antidepressants_sensitivity_eligible,
   od.event AS antidepressants_event,
   od.time_days AS antidepressants_time_days,
   opd.first_pre_dem_eventdate AS antipsychotics_antidepressants_pre_dem_eventdate,
   opd.first_post_dem_eventdate AS antipsychotics_antidepressants_post_dem_eventdate,
-  opd.eligibility AS antipsychotics_antidepressants_eligibility,
+  opd.sensitivity_eligible AS antipsychotics_antidepressants_sensitivity_eligible,
   opd.event AS antipsychotics_antidepressants_event,
   opd.time_days AS antipsychotics_antidepressants_time_days,
   oh.first_pre_dem_eventdate AS anxiety_and_hypnotics_pre_dem_eventdate,
   oh.first_post_dem_eventdate AS anxiety_and_hypnotics_post_dem_eventdate,
-  oh.eligibility AS anxiety_and_hypnotics_eligibility,
+  oh.sensitivity_eligible AS anxiety_and_hypnotics_sensitivity_eligible,
   oh.event AS anxiety_and_hypnotics_event,
   oh.time_days AS anxiety_and_hypnotics_time_days,
   ops.first_pre_dem_eventdate AS psychosis_pre_dem_eventdate,
   ops.first_post_dem_eventdate AS psychosis_post_dem_eventdate,
-  ops.eligibility AS psychosis_eligibility,
+  ops.sensitivity_eligible AS psychosis_sensitivity_eligible,
   ops.event AS psychosis_event,
   ops.time_days AS psychosis_time_days,
   odl.first_pre_dem_eventdate AS delirium_pre_dem_eventdate,
   odl.first_post_dem_eventdate AS delirium_post_dem_eventdate,
-  odl.eligibility AS delirium_eligibility,
+  odl.sensitivity_eligible AS delirium_sensitivity_eligible,
   odl.event AS delirium_event,
   odl.time_days AS delirium_time_days,
   oaf.first_pre_dem_eventdate AS affective_pre_dem_eventdate,
   oaf.first_post_dem_eventdate AS affective_post_dem_eventdate,
-  oaf.eligibility AS affective_eligibility,
+  oaf.sensitivity_eligible AS affective_sensitivity_eligible,
   oaf.event AS affective_event,
   oaf.time_days AS affective_time_days,
   och.first_pre_dem_eventdate AS challenging_pre_dem_eventdate,
   och.first_post_dem_eventdate AS challenging_post_dem_eventdate,
-  och.eligibility AS challenging_eligibility,
+  och.sensitivity_eligible AS challenging_sensitivity_eligible,
   och.event AS challenging_event,
   och.time_days AS challenging_time_days
 FROM
@@ -182,7 +184,9 @@ ALTER TABLE analysis_dataset
 ADD PRIMARY KEY (patid),
 ADD INDEX idx_analysis_dataset_practice (pracid);
 
--- 3. Model export excludes descriptive-only and future covariate fields.
+-- 3. Model export includes baseline disease dates and outcome dates.
+-- Primary event/time fields retain prior cases. The history flags apply
+-- only to sensitivity analyses.
 CREATE OR REPLACE VIEW analysis_model AS
 SELECT
   a.patid,
@@ -206,31 +210,51 @@ SELECT
   a.confounder_dep_anx_eventdate,
   a.confounder_smi_eventdate,
   a.confounder_tbi_eventdate,
-  a.care_home_eligibility,
+  a.type2_diabetes_eventdate,
+  a.ihd_eventdate,
+  a.care_home_pre_dem_eventdate,
+  a.care_home_post_dem_eventdate,
+  a.care_home_sensitivity_eligible,
   a.care_home_event,
   a.care_home_time_days,
-  a.antipsychotics_eligibility,
+  a.antipsychotics_pre_dem_eventdate,
+  a.antipsychotics_post_dem_eventdate,
+  a.antipsychotics_sensitivity_eligible,
   a.antipsychotics_event,
   a.antipsychotics_time_days,
-  a.antidepressants_eligibility,
+  a.antidepressants_pre_dem_eventdate,
+  a.antidepressants_post_dem_eventdate,
+  a.antidepressants_sensitivity_eligible,
   a.antidepressants_event,
   a.antidepressants_time_days,
-  a.antipsychotics_antidepressants_eligibility,
+  a.antipsychotics_antidepressants_pre_dem_eventdate,
+  a.antipsychotics_antidepressants_post_dem_eventdate,
+  a.antipsychotics_antidepressants_sensitivity_eligible,
   a.antipsychotics_antidepressants_event,
   a.antipsychotics_antidepressants_time_days,
-  a.anxiety_and_hypnotics_eligibility,
+  a.anxiety_and_hypnotics_pre_dem_eventdate,
+  a.anxiety_and_hypnotics_post_dem_eventdate,
+  a.anxiety_and_hypnotics_sensitivity_eligible,
   a.anxiety_and_hypnotics_event,
   a.anxiety_and_hypnotics_time_days,
-  a.psychosis_eligibility,
+  a.psychosis_pre_dem_eventdate,
+  a.psychosis_post_dem_eventdate,
+  a.psychosis_sensitivity_eligible,
   a.psychosis_event,
   a.psychosis_time_days,
-  a.delirium_eligibility,
+  a.delirium_pre_dem_eventdate,
+  a.delirium_post_dem_eventdate,
+  a.delirium_sensitivity_eligible,
   a.delirium_event,
   a.delirium_time_days,
-  a.affective_eligibility,
+  a.affective_pre_dem_eventdate,
+  a.affective_post_dem_eventdate,
+  a.affective_sensitivity_eligible,
   a.affective_event,
   a.affective_time_days,
-  a.challenging_eligibility,
+  a.challenging_pre_dem_eventdate,
+  a.challenging_post_dem_eventdate,
+  a.challenging_sensitivity_eligible,
   a.challenging_event,
   a.challenging_time_days
 FROM
@@ -272,10 +296,17 @@ SELECT
   feature,
   outcome_prefix,
   COUNT(*) AS n_patients,
-  COALESCE(SUM(eligibility = 1), 0) AS n_eligibility,
-  COALESCE(SUM(eligibility = 0), 0) AS n_ineligibility,
-  COALESCE(SUM(eligibility IS NULL), 0) AS n_missing_outcome_source,
+  COALESCE(SUM(sensitivity_eligible = 1), 0) AS n_sensitivity_eligible,
+  COALESCE(SUM(sensitivity_eligible = 0), 0) AS n_sensitivity_excluded_prior,
+  COALESCE(SUM(sensitivity_eligible IS NULL), 0) AS n_missing_outcome_source,
   COALESCE(SUM(event = 1), 0) AS n_events,
+  COALESCE(
+    SUM(
+      sensitivity_eligible = 1
+      AND event = 1
+    ),
+    0
+  ) AS n_sensitivity_events,
   COALESCE(SUM(event = 0), 0) AS n_censored,
   MIN(time_days) AS min_time_days,
   MAX(time_days) AS max_time_days
@@ -314,6 +345,8 @@ FROM
 
 DROP TEMPORARY TABLE tmp_analysis_outcome_config;
 
--- Model example: SELECT * FROM analysis_model WHERE care_home_eligibility=1;
--- Logistic: care_home_event. Cox: Surv(care_home_time_days, care_home_event).
+-- Primary analysis: SELECT * FROM analysis_model;
+-- Sensitivity: WHERE care_home_sensitivity_eligible = 1.
+-- Care home uses logistic regression on care_home_event.
+-- Other outcomes use time to the first post-index event.
 -- Cross-tabulations can use analysis_table1, which includes outcome fields.

@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_oxcprd_002
+-- analysis plan version: NA
 -- import codelists
 USE aurum_arld;
 

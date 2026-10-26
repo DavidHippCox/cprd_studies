@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 /*
 
 --  Some of the schema is from 

@@ -1,3 +1,6 @@
+# Authored by David Hippisley-Cox
+# project: transfer_databases
+# analysis plan version: NA
 $SourceDb = "{{DATA_ROOT}}\mariadb-12.3.2-winx64\data\gold"
 
 $TargetDb = "{{DATA_ROOT}}\mariadb-12.3.2-winx64\mariadb_backup\data\gold"

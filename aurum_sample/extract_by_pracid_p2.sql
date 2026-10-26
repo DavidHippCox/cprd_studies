@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_sample
+-- analysis plan version: NA
 -- done in source database aurum_test;
 USE aurum_test;
 

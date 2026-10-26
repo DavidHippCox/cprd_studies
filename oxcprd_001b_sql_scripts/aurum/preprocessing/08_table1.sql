@@ -1,5 +1,7 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
+-- this was used to create table 1 v2
 -- Run after 07_analysis_dataset.sql.
 -- Saves the final seven-column report as table1_summary.
 -- B2 is a subset of B1; Total includes A + B1 only.

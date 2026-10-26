@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: transfer_databases
+-- analysis plan version: NA
 USE gold;
 
 SET

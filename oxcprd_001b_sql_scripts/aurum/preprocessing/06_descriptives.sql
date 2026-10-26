@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- this was used to create table 1 v1
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 --
 --
 -- Defintions

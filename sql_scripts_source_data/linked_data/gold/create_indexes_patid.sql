@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 -- idx_patid
 
 -- CREATE INDEX idx_patid on   death_patient           (patid); 

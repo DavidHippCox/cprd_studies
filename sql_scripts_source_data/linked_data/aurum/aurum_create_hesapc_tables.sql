@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 
 --  much of the schema is from 
 --  https://github.com/Exeter-Diabetes/CPRD-analysis-package/blob/646c32a216c6f43d1b3135b86cd99cb1ef5eb219/data-raw/data-tables.yaml: 

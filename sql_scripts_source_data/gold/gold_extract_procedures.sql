@@ -1,4 +1,7 @@
-﻿-- USE gold;
+﻿-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
+-- USE gold;
 
 -- Logical source families are configured once. Gold currently uses combined
 -- physical source tables, represented by suffix range 0..0. The same resolver

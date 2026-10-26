@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_alcohol
+-- analysis plan version: NA
 -- README: interestingly there are no values in alcohol_observation which numunitid in (3784, 11554, 15411, 16361,16728) and value is null, 
 -- so upper bound is always equal to lower bound
 USE aurum_alcohol;

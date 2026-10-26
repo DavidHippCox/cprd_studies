@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- Implements v1 Analysis Plan  
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 -- Data flow:
 --   * alcohol_units_observation_classified contains the unit-based
 --     observations from codelist codes originally labelled 'check_upd'.

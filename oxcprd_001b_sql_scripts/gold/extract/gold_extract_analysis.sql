@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 -- gold_linked_extract_procedures_simple_cols.sql
 -- MariaDB 12.3.2
 --

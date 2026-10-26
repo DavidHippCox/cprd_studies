@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 INSERT INTO
   observation_medcodeid_counts (medcodeid, observation_table, observation_count)
 SELECT

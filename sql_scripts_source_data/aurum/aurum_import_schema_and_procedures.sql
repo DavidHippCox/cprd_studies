@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 USE aurum_test;
 
 -- Bulk-load settings. Run these in every MySQL session that will execute load calls.

@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- Implements v1 Analysis Plan  
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 --
 -- Assumptions:
 --   * Medcodeid present in alcohol_unit_aurum iff alc_category = 'check_upd'!

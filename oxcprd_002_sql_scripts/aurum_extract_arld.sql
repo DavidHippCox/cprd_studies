@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_oxcprd_002
+-- analysis plan version: NA
 USE aurum_test;
 
 CALL extract_by_code_to_table (

@@ -1,3 +1,6 @@
+# Authored by David Hippisley-Cox
+# project: aurum_sample
+# analysis plan version: NA
 $SourceDb = "{{DATA_ROOT}}\mariadb-12.3.2-winx64\mariadb_backup\data\aurum_dev"
 
  $TargetDb = "{{PROJECT_ROOT}}\cprd_sample\mariadb-12.3.2-winx64\data\aurum_dev"

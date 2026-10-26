@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 /*
 CREATE INDEX idx_patid_eventdate on alcohol_clinical (patid, eventdate);
 CREATE INDEX idx_patid_eventdate on dementia_clinical (patid, eventdate);

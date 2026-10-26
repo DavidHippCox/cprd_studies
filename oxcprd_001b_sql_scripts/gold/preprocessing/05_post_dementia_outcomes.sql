@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 -- post_dementia_outcomes_mariadb_pipeline_v1.sql
 -- MariaDB 12.3.2 rewrite of:
 --   extract_outcomes.R

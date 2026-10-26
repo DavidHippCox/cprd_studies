@@ -1,3 +1,6 @@
+# Authored by David Hippisley-Cox
+# project: sql_scripts
+# analysis plan version: NA
 <#
 .SYNOPSIS
 Fill in local path roots for the requested scripts.

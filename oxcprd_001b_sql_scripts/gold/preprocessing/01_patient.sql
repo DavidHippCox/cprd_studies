@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 -- run ons_death_dedip.r before this
 -- patient_candidates_mariadb_pipeline_v3.sql
 --

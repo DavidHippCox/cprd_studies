@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 USE gold_oxcprd_001b;
 
 CREATE TABLE IF NOT EXISTS medcode_template (

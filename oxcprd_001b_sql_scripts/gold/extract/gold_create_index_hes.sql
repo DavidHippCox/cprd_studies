@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 CREATE INDEX IF NOT EXISTS idx_icd_epistart_patid
     ON hes_diagnosis_epi (ICD, epistart, patid);
 

@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 CREATE TABLE IF NOT EXISTS aurum_linkage_coverage_march_2026
 (
     data_source VARCHAR(16),

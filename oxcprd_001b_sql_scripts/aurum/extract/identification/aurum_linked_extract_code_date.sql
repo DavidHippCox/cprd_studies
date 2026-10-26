@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- Implements v1 Analysis Plan  
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 -- dementia hes --
 CALL extract_linked_by_code_to_table (
   'hes_diagnosis_epi',

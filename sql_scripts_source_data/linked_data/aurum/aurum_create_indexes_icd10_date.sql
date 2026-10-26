@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 -- idx_icd10_date
 
 CREATE INDEX idx_icd10_date on   hes_diagnosis_epi       (ICD, epistart);

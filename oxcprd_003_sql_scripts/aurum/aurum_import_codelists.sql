@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_oxcprd_003
+-- analysis plan version: NA
 CREATE TABLE IF NOT EXISTS medcode_template (
   MedCodeId BIGINT UNSIGNED,
   Observations TEXT,

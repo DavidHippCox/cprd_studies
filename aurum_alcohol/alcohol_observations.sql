@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_alcohol
+-- analysis plan version: NA
 USE aurum_linked;
 
 -- extract alcohol from HES_APC, HESOP and CPRD AURUM observation

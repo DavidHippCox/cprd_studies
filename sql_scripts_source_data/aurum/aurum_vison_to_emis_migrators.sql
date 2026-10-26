@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 USE aurum_test;
 
 CREATE TABLE IF NOT EXISTS vision_to_emis_migrators (

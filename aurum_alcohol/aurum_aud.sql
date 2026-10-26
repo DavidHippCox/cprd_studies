@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_alcohol
+-- analysis plan version: NA
 -- refer to script cprd_alcohol_units.sql
 -- no longer needed as defined in aurum_alcohol database instead (extract data from aurum_alcohol instead)
 DROP TABLE IF EXISTS aurum_oxcprd_001b.aud_from_alcohol_units_patids;

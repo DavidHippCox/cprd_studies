@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_smoking
+-- analysis plan version: NA
 USE aurum_test;
 
 CREATE TABLE aurum_smoking.numunit LIKE aurum_test.numunit;

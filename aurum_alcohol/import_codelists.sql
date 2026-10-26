@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_alcohol
+-- analysis plan version: NA
 -- import codelists
 USE aurum_alcohol;
 

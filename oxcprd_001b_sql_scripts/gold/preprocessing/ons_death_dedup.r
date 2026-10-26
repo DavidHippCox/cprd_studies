@@ -1,3 +1,6 @@
+# Authored by David Hippisley-Cox
+# project: gold_oxcprd_001b
+# analysis plan version: NA
 rm(list = ls())
 gc()
 source("{{STUDY_001B_ROOT}}/gold/rfiles/utils/setup.R")

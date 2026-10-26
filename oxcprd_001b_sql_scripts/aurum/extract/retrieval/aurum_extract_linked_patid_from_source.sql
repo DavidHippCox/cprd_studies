@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- Implements v1 Analysis Plan  
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 USE aurum_linked;
 
 CALL extract_linked_by_patid_to_table_default ('patient_2019_imd', 'aurum_oxcprd_001b');

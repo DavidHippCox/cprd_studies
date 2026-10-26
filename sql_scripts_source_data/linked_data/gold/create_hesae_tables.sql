@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: sql_scripts_source_data
+-- analysis plan version: NA
 -- HES Accident & Emergency tables
 -- Based on HES_AE_Documentation_v1.9 (March 2026).
 

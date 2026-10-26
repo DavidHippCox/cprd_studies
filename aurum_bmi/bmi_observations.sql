@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_bmi
+-- analysis plan version: NA
 USE aurum_test;
 
 CREATE TABLE aurum_bmi.numunit LIKE aurum_test.numunit;

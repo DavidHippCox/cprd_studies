@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_sample
+-- analysis plan version: NA
 use aurum_dev;
 
 -- SET GLOBAL innodb_buffer_pool_size=(80 * 1024 * 1024 * 1024);

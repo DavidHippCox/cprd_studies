@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_oxcprd_003
+-- analysis plan version: NA
 -- "candidate_patids" are patients that have aud any time thiamine_only anytime
 USE aurum_test;
 

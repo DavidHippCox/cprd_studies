@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_oxcprd_002
+-- analysis plan version: NA
 -- once performing inner join of patids to create alcohol_units_observation_classified table and copying the lookups from aurum_alcohol 
 -- we do these table creations (easiest considering size of data)
 -- use MSc's aurum_arld;

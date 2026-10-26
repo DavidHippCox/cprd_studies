@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 -- alcohol_mariadb_pipeline_v1.sql
 -- MariaDB 12.3.2 rewrite of alcohol_sqlite_pipeline_v2.sql.
 --

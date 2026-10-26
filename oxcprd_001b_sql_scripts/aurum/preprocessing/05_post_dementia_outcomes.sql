@@ -1,7 +1,8 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 -- analysis plan v2: prior history restricts sensitivity analyses only.
--- this was used to create table 1 v1
+-- this was used to create table 1 v2
 -- 
 -- Defintions:
 -- We define an outcome that occures on the cohort entry date: 
@@ -330,9 +331,15 @@ SELECT
   SUM(sensitivity_eligible = 0) AS n_sensitivity_excluded_prior,
   SUM(event = 1) AS n_post_dem_events,
   SUM(event = 0) AS n_censored,
-  SUM(sensitivity_eligible = 1 AND event = 1) AS n_sensitivity_events,
-  SUM(sensitivity_eligible = 1 AND event = 0) AS n_sensitivity_censored,
-  AVG(time_days) AS mean_time_days,
+  SUM(
+    sensitivity_eligible = 1
+    AND event = 1
+  ) AS n_sensitivity_events,
+  SUM(
+    sensitivity_eligible = 1
+    AND event = 0
+  ) AS n_sensitivity_censored,
+  AVG (time_days) AS mean_time_days,
   MIN(time_days) AS min_time_days,
   MAX(time_days) AS max_time_days
 FROM

@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_sample
+-- analysis plan version: NA
 -- 
 /*
 pracids were generated from this query:

@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 -- done in source database gold
 /* sql-formatter-disable */
 DELIMITER $$

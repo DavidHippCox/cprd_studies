@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: aurum_oxcprd_003
+-- analysis plan version: NA
 USE aurum_oxcprd_003;
 
 DROP TABLE IF EXISTS aurum_oxcprd_003.aud_patids;

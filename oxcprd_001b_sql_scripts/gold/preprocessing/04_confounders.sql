@@ -1,3 +1,6 @@
+-- Authored by David Hippisley-Cox
+-- project: gold_oxcprd_001b
+-- analysis plan version: NA
 -- confounders_mariadb_pipeline_v1.sql
 -- MariaDB 12.3.2 rewrite of the depression/anxiety, SMI, and TBI
 -- confounder R pipelines.

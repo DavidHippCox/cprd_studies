@@ -1,6 +1,6 @@
 -- Authored by David Hippisley-Cox
--- project: oxcprd_001b
--- Implements v1 Analysis Plan  
+-- project: aurum_oxcprd_001b
+-- analysis plan version: v2
 CREATE TABLE IF NOT EXISTS medcode_template (
   MedCodeId BIGINT UNSIGNED,
   Observations TEXT,
