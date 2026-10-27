@@ -1,5 +1,13 @@
 data/
 create_user/
+oxcprd_001b_sql_scripts/aurum/analysis/models/model_results
 
 # Machine-specific paths, rendered scripts and private history backups.
 /local/
+oxcprd_001b_sql_scripts/aurum/analysis/descriptives/distribution_results/
+
+.Renviron
+.Renviron.*
+
+# AT investigating B2 cause of death
+oxcprd_001b_sql_scripts/aurum/analysis/descriptives/supplementary

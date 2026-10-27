@@ -35,24 +35,57 @@ VALUES
 
 DROP TABLE IF EXISTS analysis_outcomes_long;
 
--- could be removed as preproc_outcome_features_long 
+-- Keep every cohort patient/outcome; only in-follow-up dates reach models.
+-- The source table retains out-of-follow-up dates for inspection.
 CREATE TABLE analysis_outcomes_long ENGINE = InnoDB AS
+WITH
+  outcome_dates AS (
+    SELECT
+      p.patid,
+      p.dementia_index_date,
+      p.earliest_4,
+      x.feature,
+      x.outcome_prefix,
+      o.patid IS NOT NULL AS outcome_source_present,
+      o.first_pre_dem_eventdate,
+      CASE
+        WHEN o.first_post_dem_eventdate > p.dementia_index_date
+        AND o.first_post_dem_eventdate <= p.earliest_4 THEN o.first_post_dem_eventdate
+      END AS first_post_dem_eventdate,
+      CASE
+        WHEN o.first_post_dem_eventdate IS NULL THEN 0
+        WHEN o.first_post_dem_eventdate > p.dementia_index_date
+        AND o.first_post_dem_eventdate <= p.earliest_4 THEN 0
+        ELSE 1
+      END AS post_dem_date_excluded
+    FROM
+      analysis_pop AS p
+      CROSS JOIN tmp_analysis_outcome_config AS x
+      LEFT JOIN preproc_outcome_features_long AS o ON o.patid = p.patid
+      AND o.outcome_prefix = x.outcome_prefix
+      AND o.dementia_index_date = p.dementia_index_date
+  )
 SELECT
-  p.patid,
-  p.dementia_index_date,
-  x.feature,
-  x.outcome_prefix,
-  o.first_pre_dem_eventdate,
-  o.first_post_dem_eventdate,
-  o.sensitivity_eligible,
-  o.event,
-  o.time_days
+  r.patid,
+  r.dementia_index_date,
+  r.earliest_4,
+  r.feature,
+  r.outcome_prefix,
+  r.first_pre_dem_eventdate,
+  r.first_post_dem_eventdate,
+  -- Derived fields remain here for QC, including missing source rows.
+  CASE
+    WHEN r.outcome_source_present THEN r.first_pre_dem_eventdate IS NULL
+  END AS sensitivity_eligible,
+  CASE
+    WHEN r.outcome_source_present THEN r.first_post_dem_eventdate IS NOT NULL
+  END AS event,
+  CASE
+    WHEN r.outcome_source_present THEN DATEDIFF(COALESCE(r.first_post_dem_eventdate, r.earliest_4), r.dementia_index_date)
+  END AS time_days,
+  r.post_dem_date_excluded
 FROM
-  analysis_pop AS p
-  CROSS JOIN tmp_analysis_outcome_config AS x
-  LEFT JOIN preproc_outcome_features_long AS o ON o.patid = p.patid
-  AND o.outcome_prefix = x.outcome_prefix
-  AND o.dementia_index_date = p.dementia_index_date;
+  outcome_dates AS r;
 
 ALTER TABLE analysis_outcomes_long
 ADD PRIMARY KEY (patid, outcome_prefix),
@@ -111,49 +144,22 @@ SELECT
   CAST(NULL AS UNSIGNED) AS clinical_aud,
   oc.first_pre_dem_eventdate AS care_home_pre_dem_eventdate,
   oc.first_post_dem_eventdate AS care_home_post_dem_eventdate,
-  oc.sensitivity_eligible AS care_home_sensitivity_eligible,
-  oc.event AS care_home_event,
-  oc.time_days AS care_home_time_days,
   op.first_pre_dem_eventdate AS antipsychotics_pre_dem_eventdate,
   op.first_post_dem_eventdate AS antipsychotics_post_dem_eventdate,
-  op.sensitivity_eligible AS antipsychotics_sensitivity_eligible,
-  op.event AS antipsychotics_event,
-  op.time_days AS antipsychotics_time_days,
   od.first_pre_dem_eventdate AS antidepressants_pre_dem_eventdate,
   od.first_post_dem_eventdate AS antidepressants_post_dem_eventdate,
-  od.sensitivity_eligible AS antidepressants_sensitivity_eligible,
-  od.event AS antidepressants_event,
-  od.time_days AS antidepressants_time_days,
   opd.first_pre_dem_eventdate AS antipsychotics_antidepressants_pre_dem_eventdate,
   opd.first_post_dem_eventdate AS antipsychotics_antidepressants_post_dem_eventdate,
-  opd.sensitivity_eligible AS antipsychotics_antidepressants_sensitivity_eligible,
-  opd.event AS antipsychotics_antidepressants_event,
-  opd.time_days AS antipsychotics_antidepressants_time_days,
   oh.first_pre_dem_eventdate AS anxiety_and_hypnotics_pre_dem_eventdate,
   oh.first_post_dem_eventdate AS anxiety_and_hypnotics_post_dem_eventdate,
-  oh.sensitivity_eligible AS anxiety_and_hypnotics_sensitivity_eligible,
-  oh.event AS anxiety_and_hypnotics_event,
-  oh.time_days AS anxiety_and_hypnotics_time_days,
   ops.first_pre_dem_eventdate AS psychosis_pre_dem_eventdate,
   ops.first_post_dem_eventdate AS psychosis_post_dem_eventdate,
-  ops.sensitivity_eligible AS psychosis_sensitivity_eligible,
-  ops.event AS psychosis_event,
-  ops.time_days AS psychosis_time_days,
   odl.first_pre_dem_eventdate AS delirium_pre_dem_eventdate,
   odl.first_post_dem_eventdate AS delirium_post_dem_eventdate,
-  odl.sensitivity_eligible AS delirium_sensitivity_eligible,
-  odl.event AS delirium_event,
-  odl.time_days AS delirium_time_days,
   oaf.first_pre_dem_eventdate AS affective_pre_dem_eventdate,
   oaf.first_post_dem_eventdate AS affective_post_dem_eventdate,
-  oaf.sensitivity_eligible AS affective_sensitivity_eligible,
-  oaf.event AS affective_event,
-  oaf.time_days AS affective_time_days,
   och.first_pre_dem_eventdate AS challenging_pre_dem_eventdate,
-  och.first_post_dem_eventdate AS challenging_post_dem_eventdate,
-  och.sensitivity_eligible AS challenging_sensitivity_eligible,
-  och.event AS challenging_event,
-  och.time_days AS challenging_time_days
+  och.first_post_dem_eventdate AS challenging_post_dem_eventdate
 FROM
   analysis_pop AS p
   LEFT JOIN preproc_patient_bmi_dementia AS b ON b.patid = p.patid
@@ -185,8 +191,8 @@ ADD PRIMARY KEY (patid),
 ADD INDEX idx_analysis_dataset_practice (pracid);
 
 -- 3. Model export includes baseline disease dates and outcome dates.
--- Primary event/time fields retain prior cases. The history flags apply
--- only to sensitivity analyses.
+-- Nonmissing post-dem dates are events strictly after index and through earliest_4.
+-- R derives events and time; pre-dem dates identify sensitivity exclusions.
 CREATE OR REPLACE VIEW analysis_model AS
 SELECT
   a.patid,
@@ -214,49 +220,22 @@ SELECT
   a.ihd_eventdate,
   a.care_home_pre_dem_eventdate,
   a.care_home_post_dem_eventdate,
-  a.care_home_sensitivity_eligible,
-  a.care_home_event,
-  a.care_home_time_days,
   a.antipsychotics_pre_dem_eventdate,
   a.antipsychotics_post_dem_eventdate,
-  a.antipsychotics_sensitivity_eligible,
-  a.antipsychotics_event,
-  a.antipsychotics_time_days,
   a.antidepressants_pre_dem_eventdate,
   a.antidepressants_post_dem_eventdate,
-  a.antidepressants_sensitivity_eligible,
-  a.antidepressants_event,
-  a.antidepressants_time_days,
   a.antipsychotics_antidepressants_pre_dem_eventdate,
   a.antipsychotics_antidepressants_post_dem_eventdate,
-  a.antipsychotics_antidepressants_sensitivity_eligible,
-  a.antipsychotics_antidepressants_event,
-  a.antipsychotics_antidepressants_time_days,
   a.anxiety_and_hypnotics_pre_dem_eventdate,
   a.anxiety_and_hypnotics_post_dem_eventdate,
-  a.anxiety_and_hypnotics_sensitivity_eligible,
-  a.anxiety_and_hypnotics_event,
-  a.anxiety_and_hypnotics_time_days,
   a.psychosis_pre_dem_eventdate,
   a.psychosis_post_dem_eventdate,
-  a.psychosis_sensitivity_eligible,
-  a.psychosis_event,
-  a.psychosis_time_days,
   a.delirium_pre_dem_eventdate,
   a.delirium_post_dem_eventdate,
-  a.delirium_sensitivity_eligible,
-  a.delirium_event,
-  a.delirium_time_days,
   a.affective_pre_dem_eventdate,
   a.affective_post_dem_eventdate,
-  a.affective_sensitivity_eligible,
-  a.affective_event,
-  a.affective_time_days,
   a.challenging_pre_dem_eventdate,
-  a.challenging_post_dem_eventdate,
-  a.challenging_sensitivity_eligible,
-  a.challenging_event,
-  a.challenging_time_days
+  a.challenging_post_dem_eventdate
 FROM
   analysis_dataset AS a;
 
@@ -308,6 +287,14 @@ SELECT
     0
   ) AS n_sensitivity_events,
   COALESCE(SUM(event = 0), 0) AS n_censored,
+  COALESCE(SUM(post_dem_date_excluded), 0) AS n_excluded_post_dem_dates,
+  COALESCE(
+    SUM(
+      first_post_dem_eventdate <= dementia_index_date
+      OR first_post_dem_eventdate > earliest_4
+    ),
+    0
+  ) AS n_post_dem_outside_followup,
   MIN(time_days) AS min_time_days,
   MAX(time_days) AS max_time_days
 FROM
@@ -346,7 +333,7 @@ FROM
 DROP TEMPORARY TABLE tmp_analysis_outcome_config;
 
 -- Primary analysis: SELECT * FROM analysis_model;
--- Sensitivity: WHERE care_home_sensitivity_eligible = 1.
--- Care home uses logistic regression on care_home_event.
--- Other outcomes use time to the first post-index event.
+-- Sensitivity: WHERE care_home_pre_dem_eventdate IS NULL.
+-- Care-home event: care_home_post_dem_eventdate IS NOT NULL.
+-- Other outcomes: time to the retained event, or censoring at earliest_4.
 -- Cross-tabulations can use analysis_table1, which includes outcome fields.

@@ -1,6 +1,6 @@
 # OXCPRD_001B
 
-**Analysis plan version:** v1
+**Analysis plan version:** v2
 
 ## Summary
 
@@ -19,6 +19,7 @@ Outcomes of interest will include:
 
 Run the scripts in the following order:
 
+### Preprocessing
 1. `extract/identification/aurum_import_codelists_oxcprd_001b.sql`
 2. `extract/identification/aurum_extract_code_date.sql`
 3. `extract/identification/aurum_linked_extract_code_date.sql`
@@ -45,3 +46,9 @@ Run the scripts in the following order:
 24. `preprocessing/06_descriptives.sql`
 25. `preprocessing/07_analysis_dataset.sql`
 26. `preprocessing/08_table1.sql`
+
+
+### Analysis
+
+27.  `analysis/descriptives/distributions.R`
+28.  `analysis/models/survival.R`
