@@ -325,6 +325,14 @@ SELECT
   -- Pre- and post-dementia event counts
   SUM(first_pre_dem_eventdate IS NOT NULL) AS n_with_pre_dem_event,
   SUM(first_post_dem_eventdate IS NOT NULL) AS n_with_post_dem_event,
+  -- Must be zero: post-index outcomes are restricted to follow-up.
+  SUM(
+    CASE
+      WHEN first_post_dem_eventdate <= dementia_index_date
+      OR first_post_dem_eventdate > earliest_4 THEN 1
+      ELSE 0
+    END
+  ) AS n_post_dem_outside_followup,
   -- History before the start of the pre-dementia window
   SUM(first_pre_dem_eventdate < latest_2) AS n_with_history_before_latest_2,
   SUM(sensitivity_eligible = 1) AS n_sensitivity_eligible,
